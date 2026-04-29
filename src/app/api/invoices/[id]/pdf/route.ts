@@ -21,7 +21,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         user: {
           select: {
             defaultInvoiceStyle: true,
-            instapayHandle: true,
+            instapayUrl: true,
             vodafoneCashNumber: true,
           },
         },

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { InvoiceStylePanel } from "@/components/invoice/invoice-style-panel";
 
 type SettingsPayload = {
-  instapayHandle: string;
+  instapayUrl: string;
   vodafoneCashNumber: string;
   defaultInvoiceStyle: any;
 };
@@ -18,7 +18,7 @@ export function UserSettingsForm() {
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-  const [instapayHandle, setInstapayHandle] = useState("");
+  const [instapayUrl, setInstapayUrl] = useState("");
   const [vodafoneCashNumber, setVodafoneCashNumber] = useState("");
   const [defaultInvoiceStyle, setDefaultInvoiceStyle] = useState<any>(null);
 
@@ -27,7 +27,7 @@ export function UserSettingsForm() {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!data) return;
-        setInstapayHandle(data.instapayHandle ?? "");
+        setInstapayUrl(data.instapayUrl ?? "");
         setVodafoneCashNumber(data.vodafoneCashNumber ?? "");
         setDefaultInvoiceStyle(data.defaultInvoiceStyle ?? null);
       })
@@ -40,7 +40,7 @@ export function UserSettingsForm() {
     setStatus(null);
     try {
       const payload: SettingsPayload = {
-        instapayHandle,
+        instapayUrl,
         vodafoneCashNumber,
         defaultInvoiceStyle,
       };
@@ -81,8 +81,8 @@ export function UserSettingsForm() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>InstaPay Handle</Label>
-            <Input disabled={loading} value={instapayHandle} onChange={(e) => setInstapayHandle(e.target.value)} />
+            <Label>InstaPay URL</Label>
+            <Input disabled={loading} value={instapayUrl} onChange={(e) => setInstapayUrl(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label>Vodafone Cash Number</Label>
@@ -110,4 +110,3 @@ export function UserSettingsForm() {
     </div>
   );
 }
-

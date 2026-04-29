@@ -19,9 +19,11 @@ function money(n: number) {
 export function InvoicePreview({
   style,
   data,
+  payment,
 }: {
   style: InvoiceStyle;
   data: InvoicePreviewData;
+  payment?: { instapayUrl?: string | null; vodafoneCashNumber?: string | null };
 }) {
   const subtotal = data.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
   const taxAmount = subtotal * (data.tax / 100);
@@ -37,70 +39,132 @@ export function InvoicePreview({
       ? "font-serif"
       : "font-sans";
 
-  const borderClass =
-    style.borderStyle === "none"
-      ? "border-0"
-      : style.borderStyle === "medium"
-      ? "border-2 border-gray-300"
-      : "border border-gray-200";
+  const borderWidth =
+    style.borderStyle === "none" ? 0 : style.borderStyle === "medium" ? 2 : 1;
 
   const tableBoxed = style.tableStyle === "boxed";
+  const cellPad =
+    style.cellPadding === "lg" ? 14 : style.cellPadding === "sm" ? 8 : 10;
+  const rowSepWidth =
+    style.rowSeparator === "none" ? 0 : style.rowSeparator === "medium" ? 2 : 1;
+  const labelClass = style.uppercaseLabels ? "uppercase tracking-wider" : "";
+  const headerAlign =
+    style.headerLayout === "center"
+      ? "text-center"
+      : style.headerLayout === "right"
+      ? "text-right"
+      : "text-left";
+  const logoPx = style.logoSize === "lg" ? 80 : style.logoSize === "sm" ? 48 : 64;
 
   return (
     <div
-      className={`bg-white text-black shadow-lg max-w-2xl mx-auto aspect-[1/1.4] relative print-ready ${fontClass} ${borderClass}`}
-      style={{ borderRadius: style.borderRadius, padding }}
+      className={`shadow-lg max-w-2xl mx-auto aspect-[1/1.4] relative print-ready ${fontClass}`}
+      style={{
+        borderRadius: style.borderRadius,
+        padding,
+        borderWidth,
+        borderColor: style.borderColor,
+        backgroundColor: style.backgroundColor,
+        color: style.textColor,
+        borderStyle: "solid",
+      }}
     >
-      <div className="flex justify-between items-start mb-10">
-        <div>
-          <div className="text-xs text-gray-500 font-semibold tracking-wider uppercase mb-2">Invoice</div>
+      <div className={`flex items-start mb-10 ${style.headerLayout === "center" ? "justify-center" : "justify-between"}`}>
+        <div className={`${headerAlign} ${style.headerLayout === "split" ? "" : "flex-1"}`}>
+          <div className={`text-xs font-semibold mb-2 ${labelClass}`} style={{ fontSize: style.labelFontSize, color: style.mutedColor }}>
+            Invoice
+          </div>
           <h1
-            className="text-4xl tracking-tighter"
-            style={{ fontWeight: style.headingWeight, color: style.accentColor }}
+            className="tracking-tighter"
+            style={{
+              fontWeight: style.headingWeight,
+              color: style.accentColor,
+              fontSize: style.titleFontSize,
+              lineHeight: 1.05,
+            }}
           >
             INVOICE
           </h1>
-          <p className="text-gray-500 text-sm">#{data.invoiceNumber}</p>
-        </div>
-        <div className="text-right">
-          <div className="w-16 h-16 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 font-bold mb-4 ml-auto">
-            LOGO
+          <div style={{ color: style.mutedColor, fontSize: style.bodyFontSize }}>
+            #{data.invoiceNumber}
           </div>
-          <h2 className="font-semibold text-gray-800">Your Company</h2>
         </div>
+
+        {style.headerLayout === "split" && (
+          <div className="text-right">
+            {style.showLogo && (
+              <div
+                className="bg-gray-100 rounded-md flex items-center justify-center font-bold mb-4 ml-auto"
+                style={{
+                  width: logoPx,
+                  height: logoPx,
+                  color: style.mutedColor,
+                  backgroundColor: "#f3f4f6",
+                }}
+              >
+                LOGO
+              </div>
+            )}
+            <div className="font-semibold" style={{ color: style.textColor, fontSize: style.bodyFontSize }}>
+              Your Company
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="flex justify-between mb-8 pb-5 border-b border-gray-200">
+      <div className="flex justify-between mb-8 pb-5" style={{ borderBottomWidth: 1, borderBottomColor: style.borderColor, borderBottomStyle: "solid" }}>
         <div>
-          <p className="text-xs text-gray-500 font-semibold tracking-wider uppercase mb-1">Bill To</p>
-          <p className="font-semibold text-gray-800 text-lg">{data.clientName || "Client Name"}</p>
-          {data.clientEmail && <p className="text-gray-600 text-sm">{data.clientEmail}</p>}
+          <p className={`font-semibold mb-1 ${labelClass}`} style={{ fontSize: style.labelFontSize, color: style.mutedColor }}>
+            Bill To
+          </p>
+          <p className="font-semibold" style={{ fontSize: style.bodyFontSize + 4, color: style.textColor }}>
+            {data.clientName || "Client Name"}
+          </p>
+          {data.clientEmail && <p style={{ color: style.mutedColor, fontSize: style.bodyFontSize }}>{data.clientEmail}</p>}
         </div>
         <div className="text-right">
           <div className="mb-4">
-            <p className="text-xs text-gray-500 font-semibold tracking-wider uppercase mb-1">Issue Date</p>
-            <p className="text-gray-800 text-sm">{data.issueDate}</p>
+            <p className={`font-semibold mb-1 ${labelClass}`} style={{ fontSize: style.labelFontSize, color: style.mutedColor }}>
+              Issue Date
+            </p>
+            <p style={{ fontSize: style.bodyFontSize }}>{data.issueDate}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 font-semibold tracking-wider uppercase mb-1">Due Date</p>
-            <p className="text-gray-800 text-sm">{data.dueDate}</p>
+            <p className={`font-semibold mb-1 ${labelClass}`} style={{ fontSize: style.labelFontSize, color: style.mutedColor }}>
+              Due Date
+            </p>
+            <p style={{ fontSize: style.bodyFontSize }}>{data.dueDate}</p>
           </div>
         </div>
       </div>
 
-      <table className={`w-full mb-8 ${tableBoxed ? "border border-gray-200" : ""}`}>
+      <table
+        className="w-full mb-8"
+        style={
+          tableBoxed
+            ? { borderWidth: 1, borderColor: style.borderColor, borderStyle: "solid" }
+            : undefined
+        }
+      >
         <thead>
-          <tr className={tableBoxed ? "border-b border-gray-200 bg-gray-50" : "border-b border-gray-200"}>
-            <th className="text-left py-3 px-3 text-xs text-gray-500 font-semibold tracking-wider uppercase">
+          <tr
+            style={{
+              borderBottomWidth: 1,
+              borderBottomColor: style.borderColor,
+              borderBottomStyle: "solid",
+              backgroundColor: tableBoxed ? style.tableHeaderBg : undefined,
+            }}
+          >
+            <th className={`text-left py-3 ${labelClass}`} style={{ paddingLeft: cellPad, paddingRight: cellPad, fontSize: style.labelFontSize, color: style.mutedColor }}>
               Description
             </th>
-            <th className="text-right py-3 px-3 text-xs text-gray-500 font-semibold tracking-wider uppercase">
+            <th className={`text-right py-3 ${labelClass}`} style={{ paddingLeft: cellPad, paddingRight: cellPad, fontSize: style.labelFontSize, color: style.mutedColor }}>
               Qty
             </th>
-            <th className="text-right py-3 px-3 text-xs text-gray-500 font-semibold tracking-wider uppercase">
+            <th className={`text-right py-3 ${labelClass}`} style={{ paddingLeft: cellPad, paddingRight: cellPad, fontSize: style.labelFontSize, color: style.mutedColor }}>
               Price
             </th>
-            <th className="text-right py-3 px-3 text-xs text-gray-500 font-semibold tracking-wider uppercase">
+            <th className={`text-right py-3 ${labelClass}`} style={{ paddingLeft: cellPad, paddingRight: cellPad, fontSize: style.labelFontSize, color: style.mutedColor }}>
               Amount
             </th>
           </tr>
@@ -109,20 +173,62 @@ export function InvoicePreview({
           {data.items.map((item, i) => (
             <tr
               key={i}
-              className={`${tableBoxed ? "border-b border-gray-200" : "border-b border-gray-100"} ${
-                style.zebraRows && i % 2 === 1 ? "bg-gray-50" : ""
-              }`}
+              style={{
+                borderBottomWidth: rowSepWidth,
+                borderBottomColor: style.borderColor,
+                borderBottomStyle: "solid",
+                backgroundColor: style.zebraRows && i % 2 === 1 ? style.zebraColor : undefined,
+              }}
             >
-              <td className="py-4 px-3 text-gray-800 text-sm" style={{ fontSize: style.baseFontSize }}>
+              <td
+                className="py-4"
+                style={{
+                  paddingLeft: cellPad,
+                  paddingRight: cellPad,
+                  fontSize: style.bodyFontSize,
+                  borderRightWidth: style.showColumnBorders ? 1 : 0,
+                  borderRightColor: style.borderColor,
+                  borderRightStyle: "solid",
+                }}
+              >
                 {item.title || "Item description"}
               </td>
-              <td className="text-right py-4 px-3 text-gray-600 text-sm" style={{ fontSize: style.baseFontSize }}>
+              <td
+                className="text-right py-4"
+                style={{
+                  paddingLeft: cellPad,
+                  paddingRight: cellPad,
+                  fontSize: style.bodyFontSize,
+                  color: style.mutedColor,
+                  borderRightWidth: style.showColumnBorders ? 1 : 0,
+                  borderRightColor: style.borderColor,
+                  borderRightStyle: "solid",
+                }}
+              >
                 {item.quantity}
               </td>
-              <td className="text-right py-4 px-3 text-gray-600 text-sm" style={{ fontSize: style.baseFontSize }}>
+              <td
+                className="text-right py-4"
+                style={{
+                  paddingLeft: cellPad,
+                  paddingRight: cellPad,
+                  fontSize: style.bodyFontSize,
+                  color: style.mutedColor,
+                  borderRightWidth: style.showColumnBorders ? 1 : 0,
+                  borderRightColor: style.borderColor,
+                  borderRightStyle: "solid",
+                }}
+              >
                 {money(item.price)}
               </td>
-              <td className="text-right py-4 px-3 text-gray-800 font-medium text-sm" style={{ fontSize: style.baseFontSize }}>
+              <td
+                className="text-right py-4 font-medium"
+                style={{
+                  paddingLeft: cellPad,
+                  paddingRight: cellPad,
+                  fontSize: style.bodyFontSize,
+                }}
+              >
                 {money(item.quantity * item.price)}
               </td>
             </tr>
@@ -132,21 +238,30 @@ export function InvoicePreview({
 
       <div className="flex justify-end mb-10">
         <div className="w-72 space-y-3">
-          <div className="flex justify-between text-sm text-gray-600">
+          <div className="flex justify-between text-sm" style={{ color: style.mutedColor, fontSize: style.bodyFontSize }}>
             <span>Subtotal</span>
             <span>
               {money(subtotal)} {data.currency}
             </span>
           </div>
           {data.tax > 0 && (
-            <div className="flex justify-between text-sm text-gray-600">
+            <div className="flex justify-between text-sm" style={{ color: style.mutedColor, fontSize: style.bodyFontSize }}>
               <span>Tax ({data.tax}%)</span>
               <span>
                 {money(taxAmount)} {data.currency}
               </span>
             </div>
           )}
-          <div className="flex justify-between text-lg pt-3 border-t border-gray-200" style={{ fontWeight: style.headingWeight }}>
+          <div
+            className="flex justify-between text-lg pt-3"
+            style={{
+              fontWeight: style.headingWeight,
+              borderTopWidth: 1,
+              borderTopColor: style.borderColor,
+              borderTopStyle: "solid",
+              fontSize: style.bodyFontSize + 4,
+            }}
+          >
             <span>Total</span>
             <span>
               {money(total)} {data.currency}
@@ -156,9 +271,39 @@ export function InvoicePreview({
       </div>
 
       {data.notes && (
-        <div className="mt-10 pt-6 border-t border-gray-200 text-gray-500 text-sm">
-          <p className="font-semibold text-gray-700 mb-2">Notes</p>
+        <div className="mt-10 pt-6 text-sm" style={{ borderTopWidth: 1, borderTopColor: style.borderColor, borderTopStyle: "solid", color: style.mutedColor, fontSize: style.bodyFontSize }}>
+          <p className="font-semibold mb-2" style={{ color: style.textColor }}>Notes</p>
           <p className="whitespace-pre-wrap">{data.notes}</p>
+        </div>
+      )}
+
+      {(payment?.instapayUrl || payment?.vodafoneCashNumber) && (
+        <div
+          className="mt-8 pt-6 text-sm"
+          style={{
+            borderTopWidth: 1,
+            borderTopColor: style.borderColor,
+            borderTopStyle: "solid",
+            color: style.mutedColor,
+            fontSize: style.bodyFontSize,
+          }}
+        >
+          <div className="flex flex-wrap gap-4 items-center justify-between">
+            <div>
+              {payment?.vodafoneCashNumber && <div>Vodafone Cash: {payment.vodafoneCashNumber}</div>}
+            </div>
+            {payment?.instapayUrl && (
+              <a
+                href={payment.instapayUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2 rounded-md text-white font-medium"
+                style={{ backgroundColor: style.accentColor }}
+              >
+                Pay with InstaPay
+              </a>
+            )}
+          </div>
         </div>
       )}
 

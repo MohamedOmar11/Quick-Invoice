@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Link from "next/link";
-import { Users, FileText, Settings, LogOut, CreditCard, ShieldAlert, Gift } from "lucide-react";
+import { Users, FileText, CreditCard, ShieldAlert, Gift, SlidersHorizontal } from "lucide-react";
 
 export default async function AdminLayout({
   children,
@@ -32,6 +32,10 @@ export default async function AdminLayout({
           <Link href="/admin" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium">
             <Users className="w-4 h-4 text-muted-foreground" />
             Users
+          </Link>
+          <Link href="/admin/app-settings" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium">
+            <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
+            App Settings
           </Link>
           <Link href="/admin/payments" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium">
             <CreditCard className="w-4 h-4 text-muted-foreground" />

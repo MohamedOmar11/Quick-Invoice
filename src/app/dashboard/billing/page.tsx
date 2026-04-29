@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,23 @@ export default function BillingPage() {
   const [screenshotUrl, setScreenshotUrl] = useState("");
   const [submittingPayment, setSubmittingPayment] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [ownerPayment, setOwnerPayment] = useState<{
+    ownerInstapayUrl: string | null;
+    ownerVodafoneCashNumber: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/app-settings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data) return;
+        setOwnerPayment({
+          ownerInstapayUrl: data.ownerInstapayUrl ?? null,
+          ownerVodafoneCashNumber: data.ownerVodafoneCashNumber ?? null,
+        });
+      })
+      .catch(() => {});
+  }, []);
 
   const handleRedeemPromo = async () => {
     setPromoError("");
@@ -154,9 +171,34 @@ export default function BillingPage() {
                       <p className="text-sm text-muted-foreground mb-4">
                         Please transfer exactly <strong className="text-foreground">150 EGP</strong> to the following account:
                       </p>
-                      <div className="bg-background border rounded-lg p-4 font-mono text-xl font-bold tracking-widest inline-block mx-auto mb-2">
-                        {paymentMethod === "INSTAPAY" ? "quickinvoice@instapay" : "01012345678"}
-                      </div>
+                      {paymentMethod === "INSTAPAY" ? (
+                        ownerPayment?.ownerInstapayUrl ? (
+                          <div className="space-y-3">
+                            <div className="bg-background border rounded-lg p-4 text-sm break-all inline-block mx-auto">
+                              {ownerPayment.ownerInstapayUrl}
+                            </div>
+                            <Button
+                              variant="outline"
+                              className="rounded-full"
+                              onClick={() => window.open(ownerPayment.ownerInstapayUrl as string, "_blank")}
+                            >
+                              Open InstaPay Link
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="text-sm text-destructive font-medium">
+                            Owner InstaPay link is not configured yet.
+                          </div>
+                        )
+                      ) : ownerPayment?.ownerVodafoneCashNumber ? (
+                        <div className="bg-background border rounded-lg p-4 font-mono text-xl font-bold tracking-widest inline-block mx-auto mb-2">
+                          {ownerPayment.ownerVodafoneCashNumber}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-destructive font-medium">
+                          Owner Vodafone Cash number is not configured yet.
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-4">

@@ -13,5 +13,6 @@ test("mergeInvoiceStyle uses invoice override over user default", () => {
 test("mergeInvoiceStyle falls back to defaults", () => {
   const merged = mergeInvoiceStyle(null, null);
   assert.equal(merged.borderStyle, defaultInvoiceStyle.borderStyle);
+  assert.equal(merged.headerLayout, defaultInvoiceStyle.headerLayout);
+  assert.equal(merged.showLogo, defaultInvoiceStyle.showLogo);
 });
-

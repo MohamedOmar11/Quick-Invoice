@@ -42,6 +42,7 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
   const router = useRouter();
   const searchParams = useSearchParams();
   const [userDefaultStyle, setUserDefaultStyle] = useState<any>(null);
+  const [userPayment, setUserPayment] = useState<{ instapayUrl?: string | null; vodafoneCashNumber?: string | null } | null>(null);
   const defaultValues: InvoiceFormData = initialData || {
     invoiceNumber: `INV-${Math.floor(Math.random() * 10000)}`,
     clientName: "",
@@ -87,6 +88,12 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.defaultInvoiceStyle) setUserDefaultStyle(data.defaultInvoiceStyle);
+        if (data) {
+          setUserPayment({
+            instapayUrl: data.instapayUrl ?? null,
+            vodafoneCashNumber: data.vodafoneCashNumber ?? null,
+          });
+        }
       })
       .catch(() => {});
   }, []);
@@ -293,6 +300,7 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
             notes: watchAll.notes,
             items: watchAll.items,
           }}
+          payment={userPayment ?? undefined}
         />
       </div>
     </div>

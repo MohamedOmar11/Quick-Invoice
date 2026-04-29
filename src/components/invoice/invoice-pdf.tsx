@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Link, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { mergeInvoiceStyle } from "@/components/invoice/invoice-style";
 
 function money(n: number) {
@@ -26,36 +26,79 @@ export const InvoicePdf = ({ invoice }: { invoice: any }) => {
       : 1;
 
   const tableBoxed = effectiveStyle.tableStyle === "boxed";
+  const rowSepWidth =
+    effectiveStyle.rowSeparator === "none" ? 0 : effectiveStyle.rowSeparator === "medium" ? 2 : 1;
+  const cellPad =
+    effectiveStyle.cellPadding === "lg" ? 12 : effectiveStyle.cellPadding === "sm" ? 6 : 10;
 
   const styles = StyleSheet.create({
     page: {
       padding,
       fontFamily,
-      fontSize: effectiveStyle.baseFontSize,
-      color: "#111111",
+      fontSize: effectiveStyle.bodyFontSize ?? effectiveStyle.baseFontSize,
+      color: effectiveStyle.textColor,
+      backgroundColor: effectiveStyle.backgroundColor,
     },
     wrap: {
       borderWidth,
-      borderColor: "#e5e7eb",
+      borderColor: effectiveStyle.borderColor,
       borderRadius: effectiveStyle.borderRadius,
       padding: 18,
+      backgroundColor: effectiveStyle.backgroundColor,
     },
     header: { flexDirection: "row", justifyContent: "space-between", marginBottom: 18 },
-    title: { fontSize: 22, fontWeight: effectiveStyle.headingWeight as any, color: effectiveStyle.accentColor },
-    subtitle: { fontSize: 10, color: "#6b7280", marginTop: 4 },
-    metaRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 14, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: "#e5e7eb" },
-    label: { fontSize: 10, color: "#6b7280", marginBottom: 4 },
-    strong: { fontWeight: effectiveStyle.headingWeight as any, color: "#111111" },
-    table: { width: "100%", marginTop: 10, borderWidth: tableBoxed ? 1 : 0, borderColor: "#e5e7eb" },
-    tableHeader: { flexDirection: "row", paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: "#e5e7eb", backgroundColor: tableBoxed ? "#f9fafb" : undefined },
-    row: { flexDirection: "row", paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: tableBoxed ? "#e5e7eb" : "#f3f4f6" },
-    cellDesc: { flex: 3, paddingHorizontal: tableBoxed ? 10 : 0 },
-    cell: { flex: 1, textAlign: "right", paddingHorizontal: tableBoxed ? 10 : 0 },
+    title: {
+      fontSize: effectiveStyle.titleFontSize ? Math.max(18, Math.round(effectiveStyle.titleFontSize * 0.7)) : 22,
+      fontWeight: effectiveStyle.headingWeight as any,
+      color: effectiveStyle.accentColor,
+    },
+    subtitle: { fontSize: effectiveStyle.labelFontSize ?? 10, color: effectiveStyle.mutedColor, marginTop: 4 },
+    metaRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: 14,
+      paddingBottom: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: effectiveStyle.borderColor,
+    },
+    label: {
+      fontSize: effectiveStyle.labelFontSize ?? 10,
+      color: effectiveStyle.mutedColor,
+      marginBottom: 4,
+    },
+    strong: { fontWeight: effectiveStyle.headingWeight as any, color: effectiveStyle.textColor },
+    table: { width: "100%", marginTop: 10, borderWidth: tableBoxed ? 1 : 0, borderColor: effectiveStyle.borderColor },
+    tableHeader: {
+      flexDirection: "row",
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: effectiveStyle.borderColor,
+      backgroundColor: tableBoxed ? effectiveStyle.tableHeaderBg : undefined,
+    },
+    row: {
+      flexDirection: "row",
+      paddingVertical: 8,
+      borderBottomWidth: rowSepWidth,
+      borderBottomColor: effectiveStyle.borderColor,
+    },
+    cellDesc: {
+      flex: 3,
+      paddingHorizontal: cellPad,
+      borderRightWidth: effectiveStyle.showColumnBorders ? 1 : 0,
+      borderRightColor: effectiveStyle.borderColor,
+    },
+    cell: {
+      flex: 1,
+      textAlign: "right",
+      paddingHorizontal: cellPad,
+      borderRightWidth: effectiveStyle.showColumnBorders ? 1 : 0,
+      borderRightColor: effectiveStyle.borderColor,
+    },
     totals: { marginTop: 14, width: "45%", alignSelf: "flex-end" },
-    totalsRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 4, color: "#4b5563" },
-    totalsStrong: { flexDirection: "row", justifyContent: "space-between", paddingTop: 8, marginTop: 6, borderTopWidth: 1, borderTopColor: "#e5e7eb" },
-    notes: { marginTop: 18, paddingTop: 10, borderTopWidth: 1, borderTopColor: "#e5e7eb" },
-    footer: { marginTop: 18, fontSize: 10, color: "#9ca3af" },
+    totalsRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 4, color: effectiveStyle.mutedColor },
+    totalsStrong: { flexDirection: "row", justifyContent: "space-between", paddingTop: 8, marginTop: 6, borderTopWidth: 1, borderTopColor: effectiveStyle.borderColor },
+    notes: { marginTop: 18, paddingTop: 10, borderTopWidth: 1, borderTopColor: effectiveStyle.borderColor },
+    footer: { marginTop: 18, fontSize: effectiveStyle.labelFontSize ?? 10, color: effectiveStyle.mutedColor },
   });
 
   const subtotal = invoice.items.reduce((acc: number, it: any) => acc + it.quantity * it.price, 0);
@@ -95,20 +138,22 @@ export const InvoicePdf = ({ invoice }: { invoice: any }) => {
               <Text style={styles.cellDesc}>Description</Text>
               <Text style={styles.cell}>Qty</Text>
               <Text style={styles.cell}>Price</Text>
-              <Text style={styles.cell}>Amount</Text>
+              <Text style={[styles.cell, { borderRightWidth: 0 }]}>Amount</Text>
             </View>
             {invoice.items.map((item: any, i: number) => (
               <View
                 key={i}
                 style={[
                   styles.row,
-                  effectiveStyle.zebraRows && i % 2 === 1 ? { backgroundColor: "#f9fafb" } : {},
+                  effectiveStyle.zebraRows && i % 2 === 1
+                    ? { backgroundColor: effectiveStyle.zebraColor }
+                    : {},
                 ]}
               >
                 <Text style={styles.cellDesc}>{item.title}</Text>
                 <Text style={styles.cell}>{item.quantity}</Text>
                 <Text style={styles.cell}>{money(item.price)}</Text>
-                <Text style={styles.cell}>{money(item.quantity * item.price)}</Text>
+                <Text style={[styles.cell, { borderRightWidth: 0 }]}>{money(item.quantity * item.price)}</Text>
               </View>
             ))}
           </View>
@@ -143,9 +188,16 @@ export const InvoicePdf = ({ invoice }: { invoice: any }) => {
             </View>
           ) : null}
 
-          {invoice?.user?.instapayHandle || invoice?.user?.vodafoneCashNumber ? (
+          {invoice?.user?.instapayUrl || invoice?.user?.vodafoneCashNumber ? (
             <View style={styles.footer}>
-              {invoice?.user?.instapayHandle ? <Text>InstaPay: {invoice.user.instapayHandle}</Text> : null}
+              {invoice?.user?.instapayUrl ? (
+                <View style={{ marginBottom: 6 }}>
+                  <Text>InstaPay:</Text>
+                  <Link src={invoice.user.instapayUrl} style={{ color: effectiveStyle.accentColor }}>
+                    {invoice.user.instapayUrl}
+                  </Link>
+                </View>
+              ) : null}
               {invoice?.user?.vodafoneCashNumber ? <Text>Vodafone Cash: {invoice.user.vodafoneCashNumber}</Text> : null}
             </View>
           ) : null}

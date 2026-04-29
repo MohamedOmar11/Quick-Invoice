@@ -12,7 +12,7 @@ export async function GET() {
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: {
-      instapayHandle: true,
+      instapayUrl: true,
       vodafoneCashNumber: true,
       defaultInvoiceStyle: true,
     },
@@ -28,17 +28,17 @@ export async function PUT(req: Request) {
   }
 
   const body = await req.json();
-  const { instapayHandle, vodafoneCashNumber, defaultInvoiceStyle } = body ?? {};
+  const { instapayUrl, vodafoneCashNumber, defaultInvoiceStyle } = body ?? {};
 
   const user = await prisma.user.update({
     where: { id: session.user.id },
     data: {
-      instapayHandle: typeof instapayHandle === "string" ? instapayHandle : null,
+      instapayUrl: typeof instapayUrl === "string" ? instapayUrl : null,
       vodafoneCashNumber: typeof vodafoneCashNumber === "string" ? vodafoneCashNumber : null,
       defaultInvoiceStyle: typeof defaultInvoiceStyle === "object" ? defaultInvoiceStyle : null,
     },
     select: {
-      instapayHandle: true,
+      instapayUrl: true,
       vodafoneCashNumber: true,
       defaultInvoiceStyle: true,
     },
@@ -46,4 +46,3 @@ export async function PUT(req: Request) {
 
   return NextResponse.json(user);
 }
-

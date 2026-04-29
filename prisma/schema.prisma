@@ -45,7 +45,7 @@ model User {
   planExpiresAt DateTime?
   brandLogoUrl  String?
   brandColor    String?
-  instapayHandle     String?
+  instapayUrl        String?
   vodafoneCashNumber String?
   defaultInvoiceStyle Json?
   role          String    @default("USER") // USER, ADMIN
@@ -54,6 +54,12 @@ model User {
   sessions      Session[]
   invoices      Invoice[]
   payments      Payment[]
+}
+
+model AppSettings {
+  id                     String  @id
+  ownerInstapayUrl       String?
+  ownerVodafoneCashNumber String?
 }
 
 model VerificationToken {

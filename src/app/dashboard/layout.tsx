@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Link from "next/link";
-import { FileText, LayoutDashboard, Settings, CreditCard } from "lucide-react";
+import { FileText, LayoutDashboard, Settings, CreditCard, Home } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
 
 export default async function DashboardLayout({
@@ -30,6 +30,10 @@ export default async function DashboardLayout({
         </div>
 
         <nav className="flex-1 px-4 py-6 flex flex-col gap-2">
+          <Link href="/" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium">
+            <Home className="w-4 h-4 text-muted-foreground" />
+            Home
+          </Link>
           <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium">
             <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
             Invoices
@@ -62,7 +66,7 @@ export default async function DashboardLayout({
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile Header */}
         <header className="h-16 border-b bg-background flex items-center px-4 md:hidden">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <FileText className="text-primary-foreground w-5 h-5" />
             </div>
