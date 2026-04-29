@@ -13,6 +13,7 @@ export default function AdminPromoCodes() {
   const [maxUses, setMaxUses] = useState(1);
   const [duration, setDuration] = useState(30);
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   useEffect(() => {
     fetchCodes();
@@ -28,6 +29,7 @@ export default function AdminPromoCodes() {
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setStatus(null);
     try {
       const res = await fetch("/api/admin/promo", {
         method: "POST",
@@ -36,9 +38,11 @@ export default function AdminPromoCodes() {
       });
       if (res.ok) {
         setNewCode("");
+        setStatus({ type: "success", message: "Promo code created." });
         fetchCodes();
       } else {
-        alert("Failed to generate code");
+        const msg = await res.text();
+        setStatus({ type: "error", message: msg || "Failed to generate code." });
       }
     } finally {
       setLoading(false);
@@ -51,6 +55,16 @@ export default function AdminPromoCodes() {
         <h1 className="text-3xl font-bold tracking-tight">Promo Codes</h1>
         <p className="text-muted-foreground">Manage and generate promo codes for marketing campaigns.</p>
       </div>
+
+      {status && (
+        <div
+          className={`rounded-lg border px-4 py-3 text-sm ${
+            status.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-red-200 bg-red-50 text-red-900"
+          }`}
+        >
+          {status.message}
+        </div>
+      )}
 
       <Card>
         <CardHeader>

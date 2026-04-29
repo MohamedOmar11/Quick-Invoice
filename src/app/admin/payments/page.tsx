@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 
 export default function AdminPayments() {
   const [payments, setPayments] = useState<any[]>([]);
+  const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   useEffect(() => {
     fetchPayments();
@@ -29,9 +30,11 @@ export default function AdminPayments() {
     });
 
     if (res.ok) {
+      setStatus({ type: "success", message: "Payment updated." });
       fetchPayments();
     } else {
-      alert("Failed to update status");
+      const msg = await res.text();
+      setStatus({ type: "error", message: msg || "Failed to update status." });
     }
   };
 
@@ -41,6 +44,16 @@ export default function AdminPayments() {
         <h1 className="text-3xl font-bold tracking-tight">Manual Payments</h1>
         <p className="text-muted-foreground">Approve or reject manual InstaPay and Vodafone Cash payments.</p>
       </div>
+
+      {status && (
+        <div
+          className={`rounded-lg border px-4 py-3 text-sm ${
+            status.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-red-200 bg-red-50 text-red-900"
+          }`}
+        >
+          {status.message}
+        </div>
+      )}
 
       <Card>
         <Table>

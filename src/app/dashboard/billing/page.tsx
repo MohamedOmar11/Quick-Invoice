@@ -17,6 +17,7 @@ export default function BillingPage() {
   const [paymentMethod, setPaymentMethod] = useState<"PAYPAL" | "INSTAPAY" | "VODAFONE" | null>(null);
   const [screenshotUrl, setScreenshotUrl] = useState("");
   const [submittingPayment, setSubmittingPayment] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const handleRedeemPromo = async () => {
     setPromoError("");
@@ -42,6 +43,7 @@ export default function BillingPage() {
   const handleManualPaymentSubmit = async () => {
     if (!screenshotUrl || !paymentMethod) return;
     setSubmittingPayment(true);
+    setPaymentStatus(null);
     try {
       const res = await fetch("/api/payments/manual", {
         method: "POST",
@@ -49,14 +51,15 @@ export default function BillingPage() {
         body: JSON.stringify({ method: paymentMethod, amount: 150, screenshotUrl }),
       });
       if (res.ok) {
-        alert("Payment submitted successfully. Waiting for admin approval.");
+        setPaymentStatus({ type: "success", message: "Payment submitted successfully. Waiting for admin approval." });
         setPaymentMethod(null);
         setScreenshotUrl("");
       } else {
-        alert("Failed to submit payment");
+        const msg = await res.text();
+        setPaymentStatus({ type: "error", message: msg || "Failed to submit payment." });
       }
     } catch (e) {
-      alert("Something went wrong");
+      setPaymentStatus({ type: "error", message: "Something went wrong." });
     } finally {
       setSubmittingPayment(false);
     }
@@ -111,6 +114,17 @@ export default function BillingPage() {
                 <CardDescription>Choose your preferred payment method</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {paymentStatus && (
+                  <div
+                    className={`rounded-lg border px-4 py-3 text-sm ${
+                      paymentStatus.type === "success"
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                        : "border-red-200 bg-red-50 text-red-900"
+                    }`}
+                  >
+                    {paymentStatus.message}
+                  </div>
+                )}
                 <div className="flex flex-wrap gap-4">
                   {["INSTAPAY", "VODAFONE", "PAYPAL"].map((method) => (
                     <Button 
@@ -161,7 +175,7 @@ export default function BillingPage() {
                             setScreenshotUrl(res[0].url);
                           }}
                           onUploadError={(error: Error) => {
-                            alert(`ERROR! ${error.message}`);
+                            setPaymentStatus({ type: "error", message: error.message });
                           }}
                         />
                       )}

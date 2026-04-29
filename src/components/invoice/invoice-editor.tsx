@@ -4,13 +4,17 @@ import { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash, Download, Save, RefreshCw } from "lucide-react";
+import { Plus, Trash, Download, Save, Printer } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { buildInvoiceSaveRequest } from "@/lib/invoice-client";
+import { invoiceThemes, coerceInvoiceThemeId } from "@/components/invoice/invoice-themes";
+import { InvoicePreview } from "@/components/invoice/invoice-preview";
 
 const invoiceSchema = z.object({
   id: z.string().optional(),
@@ -33,6 +37,8 @@ const invoiceSchema = z.object({
 export type InvoiceFormData = z.infer<typeof invoiceSchema>;
 
 export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const defaultValues: InvoiceFormData = initialData || {
     invoiceNumber: `INV-${Math.floor(Math.random() * 10000)}`,
     clientName: "",
@@ -62,38 +68,94 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
   const taxAmount = subtotal * (watchAll.tax / 100);
   const total = subtotal + taxAmount;
 
-  const handleSave = async (data: InvoiceFormData) => {
-    // API Call to save invoice
-    const res = await fetch("/api/invoices", {
-      method: data.id ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...data, subtotal, total, taxAmount }),
-    });
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-    if (res.ok) {
-      alert("Invoice saved successfully");
+  useEffect(() => {
+    if (searchParams.get("saved") === "1") {
+      setStatus({ type: "success", message: "Invoice saved." });
+      router.replace(window.location.pathname);
+    }
+  }, [router, searchParams]);
+
+  const handleSave = async (data: InvoiceFormData) => {
+    setSaving(true);
+    setStatus(null);
+
+    try {
+      const { url, method } = buildInvoiceSaveRequest(data);
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, subtotal, total, taxAmount }),
+      });
+
+      if (!res.ok) {
+        const msg = await res.text();
+        setStatus({ type: "error", message: msg || "Failed to save invoice." });
+        return;
+      }
+
+      const invoice = (await res.json()) as { id: string };
+      form.setValue("id", invoice.id);
+
+      if (!data.id) {
+        router.push(`/dashboard/invoice/${invoice.id}?saved=1`);
+        return;
+      }
+
+      setStatus({ type: "success", message: "Invoice saved." });
+    } catch (e) {
+      setStatus({ type: "error", message: "Failed to save invoice." });
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleDownload = async () => {
-    if (!initialData?.id) {
-      alert("Please save the invoice first before downloading the PDF.");
+    const invoiceId = form.getValues("id") || initialData?.id;
+    if (!invoiceId) {
+      setStatus({ type: "error", message: "Save the invoice before downloading the PDF." });
       return;
     }
-    window.open(`/api/invoices/${initialData.id}/pdf`, "_blank");
+    window.open(`/api/invoices/${invoiceId}/pdf`, "_blank");
+  };
+
+  const handlePrint = async () => {
+    const invoiceId = form.getValues("id") || initialData?.id;
+    if (!invoiceId) {
+      setStatus({ type: "error", message: "Save the invoice before printing." });
+      return;
+    }
+    window.open(`/api/invoices/${invoiceId}/pdf`, "_blank");
   };
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 p-6 max-w-7xl mx-auto h-[calc(100vh-4rem)]">
       {/* Editor Form */}
       <div className="w-full lg:w-1/2 flex flex-col gap-6 overflow-y-auto pr-4 pb-20">
+        {status && (
+          <div
+            className={`rounded-lg border px-4 py-3 text-sm ${
+              status.type === "success"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                : "border-red-200 bg-red-50 text-red-900"
+            }`}
+          >
+            {status.message}
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">Edit Invoice</h2>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={form.handleSubmit(handleSave)}>
+            <Button variant="outline" onClick={form.handleSubmit(handleSave)} disabled={saving}>
               <Save className="w-4 h-4 mr-2" /> Save
             </Button>
-            <Button onClick={handleDownload}>
+            <Button variant="outline" onClick={handlePrint} disabled={saving}>
+              <Printer className="w-4 h-4 mr-2" /> Print
+            </Button>
+            <Button onClick={handleDownload} disabled={saving}>
               <Download className="w-4 h-4 mr-2" /> PDF
             </Button>
           </div>
@@ -113,6 +175,29 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
                   <SelectItem value="EGP">EGP - Egyptian Pound</SelectItem>
                   <SelectItem value="USD">USD - US Dollar</SelectItem>
                   <SelectItem value="EUR">EUR - Euro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Theme</Label>
+              <Select
+                value={watchAll.template}
+                onValueChange={(v) => {
+                  if (v) form.setValue("template", v);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Theme" />
+                </SelectTrigger>
+                <SelectContent>
+                  {invoiceThemes.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -199,90 +284,20 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
 
       {/* Live Preview */}
       <div className="w-full lg:w-1/2 bg-muted/30 rounded-xl p-4 lg:p-8 overflow-y-auto border shadow-inner">
-        <div className="bg-white text-black p-8 rounded-lg shadow-lg max-w-2xl mx-auto aspect-[1/1.4] relative print-ready">
-          {/* Minimal Template Preview */}
-          <div className="flex justify-between items-start mb-12">
-            <div>
-              <h1 className="text-4xl font-light text-gray-900 tracking-tighter mb-2">INVOICE</h1>
-              <p className="text-gray-500 text-sm">#{watchAll.invoiceNumber}</p>
-            </div>
-            <div className="text-right">
-              {/* Brand logo would go here */}
-              <div className="w-16 h-16 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 font-bold mb-4 ml-auto">LOGO</div>
-              <h2 className="font-semibold text-gray-800">Your Company</h2>
-            </div>
-          </div>
-
-          <div className="flex justify-between mb-12">
-            <div>
-              <p className="text-xs text-gray-500 font-semibold tracking-wider uppercase mb-1">Bill To</p>
-              <p className="font-semibold text-gray-800 text-lg">{watchAll.clientName || "Client Name"}</p>
-              {watchAll.clientEmail && <p className="text-gray-600 text-sm">{watchAll.clientEmail}</p>}
-            </div>
-            <div className="text-right">
-              <div className="mb-4">
-                <p className="text-xs text-gray-500 font-semibold tracking-wider uppercase mb-1">Issue Date</p>
-                <p className="text-gray-800 text-sm">{watchAll.issueDate}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 font-semibold tracking-wider uppercase mb-1">Due Date</p>
-                <p className="text-gray-800 text-sm">{watchAll.dueDate}</p>
-              </div>
-            </div>
-          </div>
-
-          <table className="w-full mb-8">
-            <thead>
-              <tr className="border-b-2 border-gray-200">
-                <th className="text-left py-3 text-xs text-gray-500 font-semibold tracking-wider uppercase">Description</th>
-                <th className="text-right py-3 text-xs text-gray-500 font-semibold tracking-wider uppercase">Qty</th>
-                <th className="text-right py-3 text-xs text-gray-500 font-semibold tracking-wider uppercase">Price</th>
-                <th className="text-right py-3 text-xs text-gray-500 font-semibold tracking-wider uppercase">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {watchAll.items.map((item, i) => (
-                <tr key={i} className="border-b border-gray-100">
-                  <td className="py-4 text-gray-800 text-sm">{item.title || "Item description"}</td>
-                  <td className="text-right py-4 text-gray-600 text-sm">{item.quantity}</td>
-                  <td className="text-right py-4 text-gray-600 text-sm">{item.price.toFixed(2)}</td>
-                  <td className="text-right py-4 text-gray-800 font-medium text-sm">{(item.quantity * item.price).toFixed(2)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div className="flex justify-end mb-12">
-            <div className="w-64 space-y-3">
-              <div className="flex justify-between text-sm text-gray-600">
-                <span>Subtotal</span>
-                <span>{subtotal.toFixed(2)} {watchAll.currency}</span>
-              </div>
-              {watchAll.tax > 0 && (
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>Tax ({watchAll.tax}%)</span>
-                  <span>{taxAmount.toFixed(2)} {watchAll.currency}</span>
-                </div>
-              )}
-              <div className="flex justify-between font-semibold text-lg text-gray-900 border-t-2 border-gray-200 pt-3">
-                <span>Total</span>
-                <span>{total.toFixed(2)} {watchAll.currency}</span>
-              </div>
-            </div>
-          </div>
-
-          {watchAll.notes && (
-            <div className="mt-16 pt-8 border-t border-gray-200 text-gray-500 text-sm">
-              <p className="font-semibold text-gray-700 mb-2">Notes</p>
-              <p className="whitespace-pre-wrap">{watchAll.notes}</p>
-            </div>
-          )}
-
-          {/* Watermark for free plan (dummy logic for now) */}
-          <div className="absolute bottom-8 left-8 text-xs text-gray-300 font-medium tracking-widest uppercase">
-            Created with QuickInvoice
-          </div>
-        </div>
+        <InvoicePreview
+          themeId={coerceInvoiceThemeId(watchAll.template)}
+          data={{
+            invoiceNumber: watchAll.invoiceNumber,
+            clientName: watchAll.clientName,
+            clientEmail: watchAll.clientEmail,
+            issueDate: watchAll.issueDate,
+            dueDate: watchAll.dueDate,
+            currency: watchAll.currency,
+            tax: watchAll.tax,
+            notes: watchAll.notes,
+            items: watchAll.items,
+          }}
+        />
       </div>
     </div>
   );
