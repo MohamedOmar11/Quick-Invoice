@@ -24,7 +24,7 @@ export default function BillingPage() {
   } | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/app-settings")
+    fetch("/api/app-settings")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!data) return;
