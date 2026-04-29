@@ -20,10 +20,12 @@ export function InvoicePreview({
   style,
   data,
   payment,
+  direction,
 }: {
   style: InvoiceStyle;
   data: InvoicePreviewData;
   payment?: { instapayUrl?: string | null; vodafoneCashNumber?: string | null };
+  direction?: "ltr" | "rtl";
 }) {
   const subtotal = data.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
   const taxAmount = subtotal * (data.tax / 100);
@@ -59,6 +61,7 @@ export function InvoicePreview({
   return (
     <div
       className={`shadow-lg max-w-2xl mx-auto aspect-[1/1.4] relative print-ready ${fontClass}`}
+      dir={direction}
       style={{
         borderRadius: style.borderRadius,
         padding,

@@ -32,4 +32,11 @@ function mergeInvoiceStyle(userDefault, invoiceOverride) {
   return { ...defaultInvoiceStyle, ...u, ...i };
 }
 
-module.exports = { defaultInvoiceStyle, mergeInvoiceStyle };
+function buildInvoiceStyle(baseTokens, userDefault, invoiceOverride) {
+  const b = baseTokens && typeof baseTokens === "object" ? baseTokens : {};
+  const u = userDefault && typeof userDefault === "object" ? userDefault : {};
+  const i = invoiceOverride && typeof invoiceOverride === "object" ? invoiceOverride : {};
+  return { ...defaultInvoiceStyle, ...b, ...u, ...i };
+}
+
+module.exports = { defaultInvoiceStyle, mergeInvoiceStyle, buildInvoiceStyle };

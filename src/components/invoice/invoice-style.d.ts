@@ -29,3 +29,9 @@ export type InvoiceStyle = {
 export const defaultInvoiceStyle: InvoiceStyle;
 
 export function mergeInvoiceStyle(userDefault: unknown, invoiceOverride: unknown): InvoiceStyle;
+
+export function buildInvoiceStyle(
+  baseTokens: unknown,
+  userDefault: unknown,
+  invoiceOverride: unknown
+): InvoiceStyle;

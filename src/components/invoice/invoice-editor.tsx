@@ -15,7 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { buildInvoiceSaveRequest } from "@/lib/invoice-client";
 import { InvoicePreview } from "@/components/invoice/invoice-preview";
 import { InvoiceStylePanel } from "@/components/invoice/invoice-style-panel";
-import { mergeInvoiceStyle } from "@/components/invoice/invoice-style";
+import { buildInvoiceStyle } from "@/components/invoice/invoice-style";
+import { themes, getThemeById } from "@/components/invoice/themes";
 
 const invoiceSchema = z.object({
   id: z.string().optional(),
@@ -52,7 +53,7 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
     currency: "EGP",
     tax: 0,
     notes: "Thank you for your business!",
-    template: "minimal",
+    template: "minimal-corporate",
     style: undefined,
     items: [{ title: "", quantity: 1, price: 0 }],
   };
@@ -72,6 +73,15 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
   const subtotal = watchAll.items.reduce((acc, item) => acc + (item.quantity * item.price), 0);
   const taxAmount = subtotal * (watchAll.tax / 100);
   const total = subtotal + taxAmount;
+  const selectedTheme = getThemeById(watchAll.template);
+
+  useEffect(() => {
+    const current = form.getValues("template");
+    const normalized = getThemeById(current).id;
+    if (current !== normalized) {
+      form.setValue("template", normalized);
+    }
+  }, [form]);
 
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -200,6 +210,29 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Theme</Label>
+              <Select
+                value={selectedTheme.id}
+                onValueChange={(v) => {
+                  if (v) form.setValue("template", v);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Theme" />
+                </SelectTrigger>
+                <SelectContent>
+                  {themes.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <InvoiceStylePanel
             title="Style (this invoice)"
             value={watchAll.style}
@@ -288,7 +321,7 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
       {/* Live Preview */}
       <div className="w-full lg:w-1/2 bg-muted/30 rounded-xl p-4 lg:p-8 overflow-y-auto border shadow-inner">
         <InvoicePreview
-          style={mergeInvoiceStyle(userDefaultStyle, watchAll.style)}
+          style={buildInvoiceStyle(selectedTheme.tokens, userDefaultStyle, watchAll.style)}
           data={{
             invoiceNumber: watchAll.invoiceNumber,
             clientName: watchAll.clientName,
@@ -301,6 +334,7 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
             items: watchAll.items,
           }}
           payment={userPayment ?? undefined}
+          direction={selectedTheme.direction}
         />
       </div>
     </div>
