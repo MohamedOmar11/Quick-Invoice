@@ -84,6 +84,8 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
   }, [form]);
 
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [printing, setPrinting] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   useEffect(() => {
@@ -148,7 +150,9 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
       setStatus({ type: "error", message: "Save the invoice before downloading the PDF." });
       return;
     }
+    setExporting(true);
     window.open(`/api/invoices/${invoiceId}/pdf`, "_blank");
+    window.setTimeout(() => setExporting(false), 1000);
   };
 
   const handlePrint = async () => {
@@ -157,13 +161,15 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
       setStatus({ type: "error", message: "Save the invoice before printing." });
       return;
     }
+    setPrinting(true);
     window.open(`/api/invoices/${invoiceId}/pdf`, "_blank");
+    window.setTimeout(() => setPrinting(false), 1000);
   };
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 p-6 max-w-7xl mx-auto h-[calc(100vh-4rem)]">
       {/* Editor Form */}
-      <div className="w-full lg:w-1/2 flex flex-col gap-6 overflow-y-auto pr-4 pb-20">
+      <div className="w-full lg:w-1/2 flex flex-col gap-6 overflow-y-auto pr-4 pb-16">
         {status && (
           <div
             className={`rounded-lg border px-4 py-3 text-sm ${
@@ -176,18 +182,27 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
           </div>
         )}
 
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Edit Invoice</h2>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={form.handleSubmit(handleSave)} disabled={saving}>
-              <Save className="w-4 h-4 mr-2" /> Save
-            </Button>
-            <Button variant="outline" onClick={handlePrint} disabled={saving}>
-              <Printer className="w-4 h-4 mr-2" /> Print
-            </Button>
-            <Button onClick={handleDownload} disabled={saving}>
-              <Download className="w-4 h-4 mr-2" /> PDF
-            </Button>
+        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b -mx-4 px-4 py-3 rounded-xl">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold tracking-tight truncate">
+                {watchAll.id ? "Edit invoice" : "New invoice"}
+              </h2>
+              <div className="text-xs text-muted-foreground truncate">
+                {saving ? "Saving…" : exporting ? "Generating PDF…" : printing ? "Preparing print…" : "All changes are local until you save."}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={form.handleSubmit(handleSave)} disabled={saving} className="rounded-full">
+                <Save className="w-4 h-4 mr-2" /> Save
+              </Button>
+              <Button variant="outline" onClick={handlePrint} disabled={saving || printing} className="rounded-full">
+                <Printer className="w-4 h-4 mr-2" /> Print
+              </Button>
+              <Button onClick={handleDownload} disabled={saving || exporting} className="rounded-full">
+                <Download className="w-4 h-4 mr-2" /> PDF
+              </Button>
+            </div>
           </div>
         </div>
 
