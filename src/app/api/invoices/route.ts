@@ -56,7 +56,7 @@ export async function POST(req: Request) {
         tax,
         notes,
         template,
-        items: JSON.stringify(items),
+        items,
         subtotal,
         total,
       },

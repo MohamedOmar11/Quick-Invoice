@@ -49,7 +49,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         tax,
         notes,
         template,
-        items: JSON.stringify(items),
+        items,
         subtotal,
         total,
       },

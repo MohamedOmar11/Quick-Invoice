@@ -23,12 +23,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       return new NextResponse("Not Found", { status: 404 });
     }
 
-    const formattedInvoice = {
-      ...invoice,
-      items: JSON.parse(invoice.items)
-    };
-
-    const stream = await renderToStream(InvoicePdf({ invoice: formattedInvoice }) as any);
+    const stream = await renderToStream(InvoicePdf({ invoice }) as any);
     
     const chunks: Buffer[] = [];
     for await (const chunk of stream) {

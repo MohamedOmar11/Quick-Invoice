@@ -32,7 +32,7 @@ export default async function EditInvoicePage({ params }: { params: Promise<{ id
     tax: invoice.tax,
     notes: invoice.notes || "",
     template: invoice.template,
-    items: JSON.parse(invoice.items) as any,
+    items: invoice.items as any,
   };
 
   return <InvoiceEditor initialData={initialData} />;
