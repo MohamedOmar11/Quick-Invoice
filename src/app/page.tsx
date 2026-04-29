@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle2, Zap, FileText, CreditCard } from "lucide-react";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { LogoutButton } from "@/components/auth/logout-button";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const session = await getServerSession(authOptions);
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Navigation */}
@@ -20,10 +25,26 @@ export default function LandingPage() {
             <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">How it Works</Link>
           </nav>
           <div className="flex items-center gap-4">
-            <Link href="/login" className="text-sm font-medium hover:underline">Log in</Link>
-            <Button asChild className="rounded-full px-6">
-              <Link href="/register">Get Started</Link>
-            </Button>
+            {session?.user?.id ? (
+              <>
+                <Button variant="ghost" asChild className="rounded-full px-4">
+                  <Link href="/dashboard">Dashboard</Link>
+                </Button>
+                <Button variant="outline" asChild className="rounded-full px-4">
+                  <Link href="/dashboard/invoice/new">Create Invoice</Link>
+                </Button>
+                <LogoutButton variant="outline" className="rounded-full px-4" />
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="text-sm font-medium hover:underline">
+                  Log in
+                </Link>
+                <Button asChild className="rounded-full px-6">
+                  <Link href="/register">Get Started</Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>

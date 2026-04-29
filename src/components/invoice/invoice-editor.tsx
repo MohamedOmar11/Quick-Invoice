@@ -13,8 +13,9 @@ import { Plus, Trash, Download, Save, Printer } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { buildInvoiceSaveRequest } from "@/lib/invoice-client";
-import { invoiceThemes, coerceInvoiceThemeId } from "@/components/invoice/invoice-themes";
 import { InvoicePreview } from "@/components/invoice/invoice-preview";
+import { InvoiceStylePanel } from "@/components/invoice/invoice-style-panel";
+import { mergeInvoiceStyle } from "@/components/invoice/invoice-style";
 
 const invoiceSchema = z.object({
   id: z.string().optional(),
@@ -27,6 +28,7 @@ const invoiceSchema = z.object({
   tax: z.number().min(0),
   notes: z.string().optional(),
   template: z.string(),
+  style: z.any().optional(),
   items: z.array(z.object({
     title: z.string().min(1, "Required"),
     quantity: z.number().min(1),
@@ -39,6 +41,7 @@ export type InvoiceFormData = z.infer<typeof invoiceSchema>;
 export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [userDefaultStyle, setUserDefaultStyle] = useState<any>(null);
   const defaultValues: InvoiceFormData = initialData || {
     invoiceNumber: `INV-${Math.floor(Math.random() * 10000)}`,
     clientName: "",
@@ -49,6 +52,7 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
     tax: 0,
     notes: "Thank you for your business!",
     template: "minimal",
+    style: undefined,
     items: [{ title: "", quantity: 1, price: 0 }],
   };
 
@@ -77,6 +81,15 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
       router.replace(window.location.pathname);
     }
   }, [router, searchParams]);
+
+  useEffect(() => {
+    fetch("/api/user/settings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.defaultInvoiceStyle) setUserDefaultStyle(data.defaultInvoiceStyle);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSave = async (data: InvoiceFormData) => {
     setSaving(true);
@@ -180,28 +193,11 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Theme</Label>
-              <Select
-                value={watchAll.template}
-                onValueChange={(v) => {
-                  if (v) form.setValue("template", v);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Theme" />
-                </SelectTrigger>
-                <SelectContent>
-                  {invoiceThemes.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <InvoiceStylePanel
+            title="Style (this invoice)"
+            value={watchAll.style}
+            onChange={(next) => form.setValue("style", next)}
+          />
 
           <div className="space-y-4">
             <h3 className="font-semibold">Client Details</h3>
@@ -285,7 +281,7 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
       {/* Live Preview */}
       <div className="w-full lg:w-1/2 bg-muted/30 rounded-xl p-4 lg:p-8 overflow-y-auto border shadow-inner">
         <InvoicePreview
-          themeId={coerceInvoiceThemeId(watchAll.template)}
+          style={mergeInvoiceStyle(userDefaultStyle, watchAll.style)}
           data={{
             invoiceNumber: watchAll.invoiceNumber,
             clientName: watchAll.clientName,

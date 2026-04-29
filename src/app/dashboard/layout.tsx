@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Link from "next/link";
-import { FileText, LayoutDashboard, Settings, LogOut, CreditCard } from "lucide-react";
+import { FileText, LayoutDashboard, Settings, CreditCard } from "lucide-react";
+import { LogoutButton } from "@/components/auth/logout-button";
 
 export default async function DashboardLayout({
   children,
@@ -50,10 +51,10 @@ export default async function DashboardLayout({
               <p className="text-xs text-muted-foreground truncate">{session.user?.email}</p>
             </div>
           </div>
-          <Link href="/api/auth/signout" className="flex items-center gap-3 px-3 py-2 mt-2 rounded-md hover:bg-destructive/10 hover:text-destructive text-sm font-medium text-muted-foreground transition-colors">
-            <LogOut className="w-4 h-4" />
-            Log out
-          </Link>
+          <LogoutButton
+            variant="ghost"
+            className="w-full justify-start mt-2 rounded-md hover:bg-destructive/10 hover:text-destructive text-sm font-medium text-muted-foreground transition-colors"
+          />
         </div>
       </aside>
 

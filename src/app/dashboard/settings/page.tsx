@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { UserSettingsForm } from "@/components/settings/user-settings-form";
 
 export default async function SettingsPage() {
   const session = await getServerSession(authOptions);
@@ -40,6 +41,8 @@ export default async function SettingsPage() {
           <p className="text-sm text-muted-foreground">Brand settings are available on the Pro plan.</p>
         </CardContent>
       </Card>
+
+      <UserSettingsForm />
     </div>
   );
 }

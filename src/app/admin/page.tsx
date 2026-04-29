@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { PlanManager } from "@/components/admin/plan-manager";
 
 export default async function AdminDashboard() {
   const users = await prisma.user.findMany({
@@ -57,6 +58,8 @@ export default async function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <PlanManager />
 
       <Card>
         <CardHeader>

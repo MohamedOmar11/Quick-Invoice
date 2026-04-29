@@ -17,6 +17,15 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     
     const invoice = await prisma.invoice.findUnique({
       where: { id: invoiceId },
+      include: {
+        user: {
+          select: {
+            defaultInvoiceStyle: true,
+            instapayHandle: true,
+            vodafoneCashNumber: true,
+          },
+        },
+      },
     });
 
     if (!invoice || invoice.userId !== session.user.id) {
