@@ -10,9 +10,18 @@ export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     adapter: new PrismaPg(
-      new Pool({
-        connectionString: process.env.DATABASE_URL,
-      })
+      new Pool(
+        process.env.DATABASE_URL &&
+          (process.env.DATABASE_URL.includes("supabase.co") ||
+            process.env.DATABASE_URL.includes("supabase.com"))
+          ? {
+              connectionString: process.env.DATABASE_URL,
+              ssl: { rejectUnauthorized: false },
+            }
+          : {
+              connectionString: process.env.DATABASE_URL,
+            }
+      )
     ),
   });
 
