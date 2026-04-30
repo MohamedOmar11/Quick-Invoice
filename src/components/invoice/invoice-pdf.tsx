@@ -98,7 +98,7 @@ export const InvoicePdf = ({ invoice }: { invoice: any }) => {
     },
     cell: {
       flex: 1,
-      textAlign: "right",
+      textAlign: "center",
       paddingHorizontal: cellPad,
       borderRightWidth: effectiveStyle.showColumnBorders ? 1 : 0,
       borderRightColor: effectiveStyle.borderColor,

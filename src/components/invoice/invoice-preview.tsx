@@ -199,13 +199,13 @@ export function InvoicePreview({
             <th className={`py-3 ${labelClass}`} style={{ paddingLeft: cellPad, paddingRight: cellPad, fontSize: style.labelFontSize, color: style.mutedColor, textAlign: "start" }}>
               {copy.description}
             </th>
-            <th className={`text-right py-3 ${labelClass}`} style={{ paddingLeft: cellPad, paddingRight: cellPad, fontSize: style.labelFontSize, color: style.mutedColor }}>
+            <th className={`text-center py-3 ${labelClass}`} style={{ paddingLeft: cellPad, paddingRight: cellPad, fontSize: style.labelFontSize, color: style.mutedColor }}>
               {copy.qty}
             </th>
-            <th className={`text-right py-3 ${labelClass}`} style={{ paddingLeft: cellPad, paddingRight: cellPad, fontSize: style.labelFontSize, color: style.mutedColor }}>
+            <th className={`text-center py-3 ${labelClass}`} style={{ paddingLeft: cellPad, paddingRight: cellPad, fontSize: style.labelFontSize, color: style.mutedColor }}>
               {copy.price}
             </th>
-            <th className={`text-right py-3 ${labelClass}`} style={{ paddingLeft: cellPad, paddingRight: cellPad, fontSize: style.labelFontSize, color: style.mutedColor }}>
+            <th className={`text-center py-3 ${labelClass}`} style={{ paddingLeft: cellPad, paddingRight: cellPad, fontSize: style.labelFontSize, color: style.mutedColor }}>
               {copy.amount}
             </th>
           </tr>
@@ -236,7 +236,7 @@ export function InvoicePreview({
                 {item.title || copy.itemPlaceholder}
               </td>
               <td
-                className="text-right py-4"
+                className="text-center py-4"
                 style={{
                   paddingLeft: cellPad,
                   paddingRight: cellPad,
@@ -250,7 +250,7 @@ export function InvoicePreview({
                 {item.quantity}
               </td>
               <td
-                className="text-right py-4"
+                className="text-center py-4"
                 style={{
                   paddingLeft: cellPad,
                   paddingRight: cellPad,
@@ -264,7 +264,7 @@ export function InvoicePreview({
                 {money(item.price)}
               </td>
               <td
-                className="text-right py-4 font-medium"
+                className="text-center py-4 font-medium"
                 style={{
                   paddingLeft: cellPad,
                   paddingRight: cellPad,

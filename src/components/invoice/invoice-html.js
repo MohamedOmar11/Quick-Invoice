@@ -158,7 +158,7 @@ ${cssVars}
       th, td { padding: 10px; }
       th { background: var(--tableHeaderBg, #f9fafb); border-bottom: 1px solid var(--borderColor, #e5e7eb); text-align: start; }
       td { border-bottom: 1px solid var(--borderColor, #e5e7eb); }
-      .num { text-align: end; white-space: nowrap; }
+      .num { text-align: center; white-space: nowrap; }
       .keep-together { break-inside: avoid; page-break-inside: avoid; }
       .meta,
       .divider { break-inside: avoid; page-break-inside: avoid; }
