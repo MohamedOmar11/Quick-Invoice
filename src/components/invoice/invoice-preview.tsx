@@ -196,7 +196,7 @@ export function InvoicePreview({
               backgroundColor: tableBoxed ? style.tableHeaderBg : undefined,
             }}
           >
-            <th className={`text-left py-3 ${labelClass}`} style={{ paddingLeft: cellPad, paddingRight: cellPad, fontSize: style.labelFontSize, color: style.mutedColor }}>
+            <th className={`py-3 ${labelClass}`} style={{ paddingLeft: cellPad, paddingRight: cellPad, fontSize: style.labelFontSize, color: style.mutedColor, textAlign: "start" }}>
               {copy.description}
             </th>
             <th className={`text-right py-3 ${labelClass}`} style={{ paddingLeft: cellPad, paddingRight: cellPad, fontSize: style.labelFontSize, color: style.mutedColor }}>
@@ -230,6 +230,7 @@ export function InvoicePreview({
                   borderRightWidth: style.showColumnBorders ? 1 : 0,
                   borderRightColor: style.borderColor,
                   borderRightStyle: "solid",
+                  textAlign: "start",
                 }}
               >
                 {item.title || copy.itemPlaceholder}

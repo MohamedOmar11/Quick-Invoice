@@ -268,10 +268,10 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
                   form.setValue("template", v);
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger className="min-w-[260px]">
                   <SelectValue placeholder="Theme" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="min-w-[260px]">
                   {(isFree ? themes.filter((t) => t.id === "minimal-corporate") : themes).map((t) => (
                     <SelectItem key={t.id} value={t.id}>
                       {t.name}
