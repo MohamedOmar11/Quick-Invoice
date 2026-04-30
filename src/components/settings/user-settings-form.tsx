@@ -20,6 +20,7 @@ export function UserSettingsForm({ plan }: { plan: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoProgress, setLogoProgress] = useState(0);
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const [instapayUrl, setInstapayUrl] = useState("");
@@ -28,6 +29,13 @@ export function UserSettingsForm({ plan }: { plan: string }) {
   const [brandName, setBrandName] = useState("");
   const [brandLogoUrl, setBrandLogoUrl] = useState("");
   const [brandLogoUrlInput, setBrandLogoUrlInput] = useState("");
+
+  const formatUploadError = (error: unknown) => {
+    const e = error as any;
+    const msg = typeof e?.message === "string" ? e.message : "Upload failed";
+    const cause = e?.cause ? String(e.cause) : "";
+    return cause && !msg.includes(cause) ? `${msg}\n${cause}` : msg;
+  };
 
   useEffect(() => {
     fetch("/api/user/settings")
@@ -136,6 +144,7 @@ export function UserSettingsForm({ plan }: { plan: string }) {
                 </div>
                 <UploadDropzone
                   endpoint="brandLogo"
+                  onUploadProgress={(p: number) => setLogoProgress(p)}
                   onClientUploadComplete={(res) => {
                     const url = res?.[0]?.url;
                     if (url) {
@@ -145,17 +154,20 @@ export function UserSettingsForm({ plan }: { plan: string }) {
                       save({ brandLogoUrl: url });
                     }
                     setUploadingLogo(false);
+                    setLogoProgress(0);
                   }}
                   onUploadError={(error: Error) => {
                     setUploadingLogo(false);
-                    setStatus({ type: "error", message: error.message });
+                    setLogoProgress(0);
+                    setStatus({ type: "error", message: formatUploadError(error) });
                   }}
                   onUploadBegin={() => {
                     setUploadingLogo(true);
                     setStatus(null);
+                    setLogoProgress(0);
                   }}
                 />
-                {uploadingLogo ? <div className="text-sm text-muted-foreground">Uploading…</div> : null}
+                {uploadingLogo ? <div className="text-sm text-muted-foreground">Uploading… {logoProgress}%</div> : null}
               </div>
 
               <div className="flex justify-end">

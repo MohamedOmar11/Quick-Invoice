@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
+import { extractRouterConfig } from "uploadthing/server";
+import { ourFileRouter } from "@/app/api/uploadthing/core";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -32,6 +35,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans">
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

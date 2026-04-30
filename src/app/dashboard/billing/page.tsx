@@ -17,6 +17,8 @@ export default function BillingPage() {
   const [paymentMethod, setPaymentMethod] = useState<"PAYPAL" | "INSTAPAY" | "VODAFONE" | null>(null);
   const [product, setProduct] = useState<"PRO_MONTHLY" | "PRO_YEARLY" | "LIFETIME">("PRO_MONTHLY");
   const [screenshotUrl, setScreenshotUrl] = useState("");
+  const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
+  const [screenshotProgress, setScreenshotProgress] = useState(0);
   const [submittingPayment, setSubmittingPayment] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [pricing, setPricing] = useState<{ currency: string; proMonthly: number; proYearly: number; lifetime: number } | null>(null);
@@ -24,6 +26,13 @@ export default function BillingPage() {
     ownerInstapayUrl: string | null;
     ownerVodafoneCashNumber: string | null;
   } | null>(null);
+
+  const formatUploadError = (error: unknown) => {
+    const e = error as any;
+    const msg = typeof e?.message === "string" ? e.message : "Upload failed";
+    const cause = e?.cause ? String(e.cause) : "";
+    return cause && !msg.includes(cause) ? `${msg}\n${cause}` : msg;
+  };
 
   useEffect(() => {
     fetch("/api/app-settings")
@@ -264,14 +273,27 @@ export default function BillingPage() {
                       ) : (
                         <UploadDropzone
                           endpoint="paymentScreenshot"
+                          onUploadBegin={() => {
+                            setUploadingScreenshot(true);
+                            setScreenshotProgress(0);
+                            setPaymentStatus(null);
+                          }}
+                          onUploadProgress={(p: number) => setScreenshotProgress(p)}
                           onClientUploadComplete={(res) => {
                             setScreenshotUrl(res[0].url);
+                            setUploadingScreenshot(false);
+                            setScreenshotProgress(0);
                           }}
                           onUploadError={(error: Error) => {
-                            setPaymentStatus({ type: "error", message: error.message });
+                            setUploadingScreenshot(false);
+                            setScreenshotProgress(0);
+                            setPaymentStatus({ type: "error", message: formatUploadError(error) });
                           }}
                         />
                       )}
+                      {uploadingScreenshot ? (
+                        <div className="text-sm text-muted-foreground">Uploading… {screenshotProgress}%</div>
+                      ) : null}
                     </div>
 
                     <Button 
