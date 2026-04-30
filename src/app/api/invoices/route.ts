@@ -27,8 +27,24 @@ export async function POST(req: Request) {
       total,
     } = body;
 
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { plan: true, planExpiresAt: true },
+    });
+
+    const now = new Date();
+    const effectivePlan =
+      user?.plan === "PRO" && user.planExpiresAt && user.planExpiresAt < now ? "FREE" : user?.plan ?? session.user.plan;
+
+    if (user?.plan === "PRO" && user.planExpiresAt && user.planExpiresAt < now) {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { plan: "FREE", planExpiresAt: null },
+      });
+    }
+
     // Check plan limits (Free = 5/month)
-    if (session.user.plan === "FREE") {
+    if (effectivePlan === "FREE") {
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);

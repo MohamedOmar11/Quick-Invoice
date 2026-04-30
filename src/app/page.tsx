@@ -4,9 +4,18 @@ import { ArrowRight, CheckCircle2, Zap, FileText, CreditCard } from "lucide-reac
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { prisma } from "@/lib/prisma";
+import { normalizePricing } from "@/lib/pricing";
 
 export default async function LandingPage() {
   const session = await getServerSession(authOptions);
+  const settings = await prisma.appSettings.upsert({
+    where: { id: "app" },
+    update: {},
+    create: { id: "app" },
+    select: { pricing: true },
+  });
+  const pricing = normalizePricing(settings.pricing);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -132,7 +141,7 @@ export default async function LandingPage() {
                 <h3 className="text-2xl font-semibold mb-2">Free</h3>
                 <div className="mb-6">
                   <span className="text-5xl font-bold">0</span>
-                  <span className="text-muted-foreground"> EGP/month</span>
+                  <span className="text-muted-foreground"> {pricing.currency}/month</span>
                 </div>
                 <p className="text-muted-foreground mb-8">Perfect for freelancers just starting out.</p>
                 <ul className="space-y-4 mb-8 flex-1">
@@ -160,10 +169,13 @@ export default async function LandingPage() {
                 </div>
                 <h3 className="text-2xl font-semibold mb-2">Pro</h3>
                 <div className="mb-6">
-                  <span className="text-5xl font-bold">150</span>
-                  <span className="text-primary-foreground/80"> EGP/month</span>
+                  <span className="text-5xl font-bold">{pricing.proMonthly}</span>
+                  <span className="text-primary-foreground/80"> {pricing.currency}/month</span>
                 </div>
                 <p className="text-primary-foreground/80 mb-8">For established professionals who need more.</p>
+                <div className="text-sm text-primary-foreground/80 mb-6">
+                  Yearly: {pricing.proYearly} {pricing.currency}/year • Lifetime: {pricing.lifetime} {pricing.currency} once
+                </div>
                 <ul className="space-y-4 mb-8 flex-1">
                   {[
                     "Unlimited invoices",

@@ -60,6 +60,7 @@ model AppSettings {
   id                     String  @id
   ownerInstapayUrl       String?
   ownerVodafoneCashNumber String?
+  pricing                Json?
 }
 
 model VerificationToken {
@@ -97,6 +98,7 @@ model Payment {
   id            String   @id @default(cuid())
   userId        String
   method        String   // PAYPAL, INSTAPAY, VODAFONE
+  product       String?  // PRO_MONTHLY, PRO_YEARLY, LIFETIME
   amount        Float
   status        String   @default("PENDING") // PENDING, APPROVED, REJECTED
   screenshotUrl String?
@@ -112,6 +114,7 @@ model PromoCode {
   id          String   @id @default(cuid())
   code        String   @unique
   type        String   @default("PRO") // TRIAL, PRO
+  product     String?  // PRO_MONTHLY, PRO_YEARLY, LIFETIME
   duration    Int?     // Duration in days, null for lifetime or simple Pro upgrade
   maxUses     Int      @default(1)
   currentUses Int      @default(0)

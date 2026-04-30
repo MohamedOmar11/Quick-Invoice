@@ -15,9 +15,11 @@ export default function BillingPage() {
   const [promoError, setPromoError] = useState("");
   const [promoSuccess, setPromoSuccess] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"PAYPAL" | "INSTAPAY" | "VODAFONE" | null>(null);
+  const [product, setProduct] = useState<"PRO_MONTHLY" | "PRO_YEARLY" | "LIFETIME">("PRO_MONTHLY");
   const [screenshotUrl, setScreenshotUrl] = useState("");
   const [submittingPayment, setSubmittingPayment] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [pricing, setPricing] = useState<{ currency: string; proMonthly: number; proYearly: number; lifetime: number } | null>(null);
   const [ownerPayment, setOwnerPayment] = useState<{
     ownerInstapayUrl: string | null;
     ownerVodafoneCashNumber: string | null;
@@ -31,6 +33,21 @@ export default function BillingPage() {
         setOwnerPayment({
           ownerInstapayUrl: data.ownerInstapayUrl ?? null,
           ownerVodafoneCashNumber: data.ownerVodafoneCashNumber ?? null,
+        });
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/pricing")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data) return;
+        setPricing({
+          currency: data.currency ?? "EGP",
+          proMonthly: Number(data.proMonthly ?? 150),
+          proYearly: Number(data.proYearly ?? 1500),
+          lifetime: Number(data.lifetime ?? 3000),
         });
       })
       .catch(() => {});
@@ -65,7 +82,7 @@ export default function BillingPage() {
       const res = await fetch("/api/payments/manual", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ method: paymentMethod, amount: 150, screenshotUrl }),
+        body: JSON.stringify({ method: paymentMethod, product, screenshotUrl }),
       });
       if (res.ok) {
         setPaymentStatus({ type: "success", message: "Payment submitted successfully. Waiting for admin approval." });
@@ -127,7 +144,7 @@ export default function BillingPage() {
           {paymentMethod && (
             <Card className="border-primary shadow-md">
               <CardHeader>
-                <CardTitle>Upgrade to Pro (150 EGP / month)</CardTitle>
+                <CardTitle>Upgrade</CardTitle>
                 <CardDescription>Choose your preferred payment method</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -155,6 +172,30 @@ export default function BillingPage() {
                   ))}
                 </div>
 
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant={product === "PRO_MONTHLY" ? "default" : "outline"}
+                    className="rounded-full"
+                    onClick={() => setProduct("PRO_MONTHLY")}
+                  >
+                    Monthly {pricing ? `(${pricing.proMonthly} ${pricing.currency})` : ""}
+                  </Button>
+                  <Button
+                    variant={product === "PRO_YEARLY" ? "default" : "outline"}
+                    className="rounded-full"
+                    onClick={() => setProduct("PRO_YEARLY")}
+                  >
+                    Yearly {pricing ? `(${pricing.proYearly} ${pricing.currency})` : ""}
+                  </Button>
+                  <Button
+                    variant={product === "LIFETIME" ? "default" : "outline"}
+                    className="rounded-full"
+                    onClick={() => setProduct("LIFETIME")}
+                  >
+                    Lifetime {pricing ? `(${pricing.lifetime} ${pricing.currency})` : ""}
+                  </Button>
+                </div>
+
                 {paymentMethod === "PAYPAL" ? (
                   <div className="bg-muted p-6 rounded-lg text-center">
                     <CreditCard className="w-10 h-10 mx-auto text-muted-foreground mb-4" />
@@ -169,7 +210,17 @@ export default function BillingPage() {
                         {paymentMethod === "INSTAPAY" ? "InstaPay Transfer" : "Vodafone Cash Transfer"}
                       </h3>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Please transfer exactly <strong className="text-foreground">150 EGP</strong> to the following account:
+                        Please transfer exactly{" "}
+                        <strong className="text-foreground">
+                          {pricing
+                            ? product === "PRO_YEARLY"
+                              ? `${pricing.proYearly} ${pricing.currency}`
+                              : product === "LIFETIME"
+                              ? `${pricing.lifetime} ${pricing.currency}`
+                              : `${pricing.proMonthly} ${pricing.currency}`
+                            : "—"}
+                        </strong>{" "}
+                        to the following account:
                       </p>
                       {paymentMethod === "INSTAPAY" ? (
                         ownerPayment?.ownerInstapayUrl ? (

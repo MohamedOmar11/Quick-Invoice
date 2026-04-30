@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { entitlementForProduct } from "@/lib/entitlements";
 
 export async function POST(req: Request) {
   try {
@@ -28,9 +29,16 @@ export async function POST(req: Request) {
       return new NextResponse("Promo code fully redeemed", { status: 400 });
     }
 
-    // Apply promo code
-    let planExpiresAt = null;
-    if (promoCode.duration) {
+    let nextPlan: "PRO" | "LIFETIME" = "PRO";
+    let planExpiresAt: Date | null = null;
+    if (promoCode.product) {
+      if (promoCode.product !== "PRO_MONTHLY" && promoCode.product !== "PRO_YEARLY" && promoCode.product !== "LIFETIME") {
+        return new NextResponse("Invalid promo product", { status: 400 });
+      }
+      const ent = entitlementForProduct(promoCode.product, new Date());
+      nextPlan = ent.plan;
+      planExpiresAt = ent.planExpiresAt;
+    } else if (promoCode.duration) {
       planExpiresAt = new Date();
       planExpiresAt.setDate(planExpiresAt.getDate() + promoCode.duration);
     }
@@ -39,7 +47,7 @@ export async function POST(req: Request) {
       prisma.user.update({
         where: { id: session.user.id },
         data: {
-          plan: "PRO",
+          plan: nextPlan,
           planExpiresAt,
         },
       }),
