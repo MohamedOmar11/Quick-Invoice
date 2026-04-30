@@ -189,7 +189,7 @@ ${cssVars}
             ${
               t.showLogo && brandLogoUrl
                 ? `<img alt="Logo" src="${escapeHtml(brandLogoUrl)}" style="height: ${
-                    t.logoSize === "lg" ? 64 : t.logoSize === "sm" ? 36 : 48
+                    t.logoSize === "lg" ? 96 : t.logoSize === "sm" ? 54 : 72
                   }px; width: auto;" />`
                 : ""
             }

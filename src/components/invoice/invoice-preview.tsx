@@ -67,7 +67,7 @@ export function InvoicePreview({
       : style.headerLayout === "right"
       ? "text-right"
       : "text-left";
-  const logoPx = style.logoSize === "lg" ? 80 : style.logoSize === "sm" ? 48 : 64;
+  const logoPx = style.logoSize === "lg" ? 120 : style.logoSize === "sm" ? 72 : 96;
   const brandName = brand?.name || "Your Company";
   const logoUrl = brand?.logoUrl || "";
 

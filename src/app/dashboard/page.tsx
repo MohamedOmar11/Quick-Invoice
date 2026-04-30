@@ -35,7 +35,7 @@ export default async function DashboardPage({
   });
 
   return (
-    <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-8">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Invoices</h1>
@@ -88,34 +88,63 @@ export default async function DashboardPage({
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Recent invoices</CardTitle>
-            <CardDescription>Latest invoices you created.</CardDescription>
+        <Card className="overflow-hidden">
+          <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <CardTitle className="text-base">Recent invoices</CardTitle>
+              <CardDescription>
+                {clientFilter ? `Showing ${invoices.length} results.` : `Showing ${invoices.length} invoices.`}
+              </CardDescription>
+            </div>
+            <Button asChild className="rounded-full hidden md:inline-flex">
+              <Link href="/dashboard/invoice/new">
+                <Plus className="w-4 h-4 mr-2" />
+                Create invoice
+              </Link>
+            </Button>
           </CardHeader>
-          <Table>
-            <TableHeader>
+          <Table className="[&_td]:py-3">
+            <TableHeader className="bg-muted/30">
               <TableRow>
                 <TableHead>Invoice</TableHead>
                 <TableHead>Client</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>Amount</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
                 <TableHead className="w-[80px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {invoices.map((invoice) => (
-                <TableRow key={invoice.id} className="hover:bg-muted/40">
-                  <TableCell className="font-medium">
-                    <Link href={`/dashboard/invoice/${invoice.id}`} className="hover:underline underline-offset-4">
-                      {invoice.invoiceNumber}
-                    </Link>
+                <TableRow key={invoice.id}>
+                  <TableCell>
+                    <div className="font-medium">
+                      <Link href={`/dashboard/invoice/${invoice.id}`} className="hover:underline underline-offset-4">
+                        {invoice.invoiceNumber}
+                      </Link>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(invoice.createdAt).toLocaleString(undefined, { dateStyle: "medium" })}
+                    </div>
                   </TableCell>
-                  <TableCell>{invoice.clientName}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3 min-w-[220px]">
+                      <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground">
+                        {(invoice.clientName || "C")
+                          .split(" ")
+                          .filter(Boolean)
+                          .slice(0, 2)
+                          .map((p) => p[0]?.toUpperCase())
+                          .join("")}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{invoice.clientName}</div>
+                      </div>
+                    </div>
+                  </TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(invoice.issueDate).toLocaleDateString()}
                   </TableCell>
-                  <TableCell className="font-medium">
+                  <TableCell className="font-medium text-right">
                     {invoice.total.toFixed(2)} {invoice.currency}
                   </TableCell>
                   <TableCell>

@@ -22,9 +22,9 @@ export default async function DashboardLayout({
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
       <aside className="w-64 border-r bg-sidebar hidden md:flex flex-col">
-        <div className="h-16 flex items-center px-6 border-b">
+        <div className="h-20 flex items-center px-6 border-b">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <Image src="/hesaby-logo.png" alt="Hesaby" width={270} height={72} className="h-12 w-auto" priority />
+            <Image src="/hesaby-logo.png" alt="Hesaby" width={405} height={108} className="h-16 w-auto" priority />
           </Link>
         </div>
 
