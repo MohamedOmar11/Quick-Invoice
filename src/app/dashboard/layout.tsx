@@ -2,10 +2,10 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Link from "next/link";
-import { FileText } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { SidebarNav } from "@/components/dashboard/sidebar-nav";
 import { Topbar } from "@/components/dashboard/topbar";
+import Image from "next/image";
 
 export default async function DashboardLayout({
   children,
@@ -24,10 +24,7 @@ export default async function DashboardLayout({
       <aside className="w-64 border-r bg-sidebar hidden md:flex flex-col">
         <div className="h-16 flex items-center px-6 border-b">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <FileText className="text-primary-foreground w-5 h-5" />
-            </div>
-            <span className="font-bold text-lg tracking-tight">QuickInvoice</span>
+            <Image src="/hesaby-logo.png" alt="Hesaby" width={132} height={36} className="h-8 w-auto" priority />
           </Link>
         </div>
 

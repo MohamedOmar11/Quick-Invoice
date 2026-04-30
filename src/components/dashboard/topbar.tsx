@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SidebarNav } from "@/components/dashboard/sidebar-nav";
 import { ThemeToggle } from "@/components/dashboard/theme-toggle";
 import { LogoutButton } from "@/components/auth/logout-button";
+import Image from "next/image";
 
 function getTitle(pathname: string) {
   if (pathname.startsWith("/dashboard/invoice/new")) return "New invoice";
@@ -46,7 +47,9 @@ export function Topbar({
               }
             />
             <SheetContent side="left" className="p-4">
-              <div className="mb-4 text-sm font-semibold">QuickInvoice</div>
+              <div className="mb-4">
+                <Image src="/hesaby-logo.png" alt="Hesaby" width={132} height={36} className="h-8 w-auto" priority />
+              </div>
               <SidebarNav />
               <div className="mt-6 border-t pt-4">
                 <div className="text-sm font-medium truncate">{user.name || "User"}</div>

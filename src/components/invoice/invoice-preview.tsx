@@ -311,7 +311,7 @@ export function InvoicePreview({
       )}
 
       <div className="absolute bottom-8 left-8 text-xs text-gray-300 font-medium tracking-widest uppercase">
-        Created with QuickInvoice
+        Created with Hesaby
       </div>
     </div>
   );

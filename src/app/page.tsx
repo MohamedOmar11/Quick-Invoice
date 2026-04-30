@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle2, Zap, FileText, CreditCard } from "lucide-react";
+import Image from "next/image";
+import { ArrowRight, CheckCircle2, Zap, CreditCard, FileText } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -23,10 +24,14 @@ export default async function LandingPage() {
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <FileText className="text-primary-foreground w-5 h-5" />
-            </div>
-            <span className="font-bold text-xl tracking-tight">QuickInvoice</span>
+            <Image
+              src="/hesaby-logo.png"
+              alt="Hesaby"
+              width={132}
+              height={36}
+              className="h-9 w-auto"
+              priority
+            />
           </div>
           <nav className="hidden md:flex items-center gap-6">
             <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</Link>
@@ -95,7 +100,7 @@ export default async function LandingPage() {
           <div className="container mx-auto px-4">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything you need to get paid</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Stop wrestling with Word documents and Excel spreadsheets. QuickInvoice gives you superpowers.</p>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Stop wrestling with Word documents and Excel spreadsheets. Hesaby makes invoicing simple.</p>
             </div>
             <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
               {[
@@ -149,7 +154,7 @@ export default async function LandingPage() {
                     "Up to 5 invoices per month",
                     "Basic templates",
                     "Standard PDF export",
-                    "QuickInvoice watermark"
+                    "No watermark"
                   ].map((item, i) => (
                     <li key={i} className="flex items-center gap-3">
                       <CheckCircle2 className="w-5 h-5 text-primary" />
@@ -202,7 +207,7 @@ export default async function LandingPage() {
         <section className="py-24 bg-muted/30">
           <div className="container mx-auto px-4 text-center max-w-3xl">
             <h2 className="text-4xl font-bold mb-6">Ready to look more professional?</h2>
-            <p className="text-xl text-muted-foreground mb-10">Join hundreds of Egyptian freelancers who use QuickInvoice to get paid faster.</p>
+            <p className="text-xl text-muted-foreground mb-10">Join hundreds of Egyptian freelancers who use Hesaby to get paid faster.</p>
             <Button size="lg" asChild className="rounded-full px-10 h-14 text-lg">
               <Link href="/register">Create Your First Invoice</Link>
             </Button>
@@ -213,10 +218,9 @@ export default async function LandingPage() {
       <footer className="border-t py-12 bg-background">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <FileText className="w-5 h-5" />
-            <span className="font-bold text-foreground">QuickInvoice</span>
+            <Image src="/hesaby-logo.png" alt="Hesaby" width={132} height={36} className="h-8 w-auto" />
           </div>
-          <p>© {new Date().getFullYear()} QuickInvoice. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Hesaby. All rights reserved.</p>
         </div>
       </footer>
     </div>

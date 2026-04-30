@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -46,10 +46,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <FileText className="text-primary-foreground w-5 h-5" />
-            </div>
-            <span className="font-bold text-xl tracking-tight">QuickInvoice</span>
+            <Image src="/hesaby-logo.png" alt="Hesaby" width={132} height={36} className="h-9 w-auto" priority />
           </Link>
         </div>
 

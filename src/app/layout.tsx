@@ -14,8 +14,8 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Quick Invoice Generator - Create invoices in seconds",
-  description: "A production-ready SaaS web app optimized for freelancers to create professional invoices in under 30 seconds.",
+  title: "Hesaby - Create invoices in seconds",
+  description: "Hesaby is a production-ready SaaS web app optimized for freelancers to create professional invoices in under 30 seconds.",
 };
 
 const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}if(t==='dark'){document.documentElement.classList.add('dark')}else{document.documentElement.classList.remove('dark')}}catch(e){}})();`;
