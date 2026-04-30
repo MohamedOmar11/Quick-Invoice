@@ -6,14 +6,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { InvoiceStylePanel } from "@/components/invoice/invoice-style-panel";
+import { UploadDropzone } from "@/utils/uploadthing";
 
 type SettingsPayload = {
   instapayUrl: string;
   vodafoneCashNumber: string;
   defaultInvoiceStyle: any;
+  brandName?: string;
+  brandLogoUrl?: string;
 };
 
-export function UserSettingsForm() {
+export function UserSettingsForm({ plan }: { plan: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -21,6 +24,8 @@ export function UserSettingsForm() {
   const [instapayUrl, setInstapayUrl] = useState("");
   const [vodafoneCashNumber, setVodafoneCashNumber] = useState("");
   const [defaultInvoiceStyle, setDefaultInvoiceStyle] = useState<any>(null);
+  const [brandName, setBrandName] = useState("");
+  const [brandLogoUrl, setBrandLogoUrl] = useState("");
 
   useEffect(() => {
     fetch("/api/user/settings")
@@ -30,6 +35,8 @@ export function UserSettingsForm() {
         setInstapayUrl(data.instapayUrl ?? "");
         setVodafoneCashNumber(data.vodafoneCashNumber ?? "");
         setDefaultInvoiceStyle(data.defaultInvoiceStyle ?? null);
+        setBrandName(data.brandName ?? "");
+        setBrandLogoUrl(data.brandLogoUrl ?? "");
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -43,6 +50,8 @@ export function UserSettingsForm() {
         instapayUrl,
         vodafoneCashNumber,
         defaultInvoiceStyle,
+        brandName,
+        brandLogoUrl,
       };
       const res = await fetch("/api/user/settings", {
         method: "PUT",
@@ -76,6 +85,47 @@ export function UserSettingsForm() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Brand Settings</CardTitle>
+          <CardDescription>Customize your invoices with your brand identity.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {plan === "FREE" ? (
+            <p className="text-sm text-muted-foreground">Brand settings are available on the Pro plan.</p>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <Label>Company Name</Label>
+                <Input disabled={loading} value={brandName} onChange={(e) => setBrandName(e.target.value)} placeholder="Your Company" />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Company Logo</Label>
+                {brandLogoUrl ? (
+                  <div className="rounded-lg border bg-muted/10 p-3 text-sm text-muted-foreground break-all">{brandLogoUrl}</div>
+                ) : null}
+                <UploadDropzone
+                  endpoint="brandLogo"
+                  onClientUploadComplete={(res) => {
+                    const url = res?.[0]?.url;
+                    if (url) setBrandLogoUrl(url);
+                  }}
+                  onUploadError={() => {}}
+                  className="ut-label:hidden ut-allowed-content:hidden ut-button:rounded-full ut-button:bg-primary ut-button:text-primary-foreground ut-container:border-dashed ut-container:rounded-xl ut-container:bg-muted/10"
+                />
+              </div>
+
+              <div className="flex justify-end">
+                <Button onClick={save} disabled={loading || saving} className="rounded-full">
+                  Save Brand Settings
+                </Button>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Payment Settings</CardTitle>
           <CardDescription>Optional payment details shown on invoices.</CardDescription>
         </CardHeader>
@@ -89,24 +139,37 @@ export function UserSettingsForm() {
             <Input disabled={loading} value={vodafoneCashNumber} onChange={(e) => setVodafoneCashNumber(e.target.value)} />
           </div>
           <div className="flex justify-end">
-            <Button onClick={save} disabled={loading || saving}>
+            <Button onClick={save} disabled={loading || saving} className="rounded-full">
               Save
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      <InvoiceStylePanel
-        title="Default Invoice Style"
-        value={defaultInvoiceStyle}
-        onChange={setDefaultInvoiceStyle}
-      />
-
-      <div className="flex justify-end">
-        <Button onClick={save} disabled={loading || saving}>
-          Save Default Style
-        </Button>
-      </div>
+      {plan === "FREE" ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Default Invoice Style (Pro)</CardTitle>
+            <CardDescription>Customize colors, spacing, and layout.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">Default invoice style is available on the Pro plan.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <InvoiceStylePanel
+            title="Default Invoice Style"
+            value={defaultInvoiceStyle}
+            onChange={setDefaultInvoiceStyle}
+          />
+          <div className="flex justify-end">
+            <Button onClick={save} disabled={loading || saving} className="rounded-full">
+              Save Default Style
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

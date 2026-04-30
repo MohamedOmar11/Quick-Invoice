@@ -43,6 +43,7 @@ model User {
   
   plan          String    @default("FREE") // FREE, PRO, LIFETIME
   planExpiresAt DateTime?
+  brandName     String?
   brandLogoUrl  String?
   brandColor    String?
   instapayUrl        String?

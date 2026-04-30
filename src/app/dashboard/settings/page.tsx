@@ -31,18 +31,8 @@ export default async function SettingsPage() {
           </div>
         </CardContent>
       </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Brand Settings (Pro)</CardTitle>
-          <CardDescription>Customize your invoices with your brand identity.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">Brand settings are available on the Pro plan.</p>
-        </CardContent>
-      </Card>
 
-      <UserSettingsForm />
+      <UserSettingsForm plan={session?.user?.plan ?? "FREE"} />
     </div>
   );
 }

@@ -15,6 +15,8 @@ export async function GET() {
       instapayUrl: true,
       vodafoneCashNumber: true,
       defaultInvoiceStyle: true,
+      brandName: true,
+      brandLogoUrl: true,
     },
   });
 
@@ -28,7 +30,7 @@ export async function PUT(req: Request) {
   }
 
   const body = await req.json();
-  const { instapayUrl, vodafoneCashNumber, defaultInvoiceStyle } = body ?? {};
+  const { instapayUrl, vodafoneCashNumber, defaultInvoiceStyle, brandName, brandLogoUrl } = body ?? {};
 
   const user = await prisma.user.update({
     where: { id: session.user.id },
@@ -36,11 +38,15 @@ export async function PUT(req: Request) {
       instapayUrl: typeof instapayUrl === "string" ? instapayUrl : null,
       vodafoneCashNumber: typeof vodafoneCashNumber === "string" ? vodafoneCashNumber : null,
       defaultInvoiceStyle: typeof defaultInvoiceStyle === "object" ? defaultInvoiceStyle : null,
+      brandName: typeof brandName === "string" ? brandName : null,
+      brandLogoUrl: typeof brandLogoUrl === "string" ? brandLogoUrl : null,
     },
     select: {
       instapayUrl: true,
       vodafoneCashNumber: true,
       defaultInvoiceStyle: true,
+      brandName: true,
+      brandLogoUrl: true,
     },
   });
 

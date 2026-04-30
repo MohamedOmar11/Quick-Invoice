@@ -13,10 +13,13 @@ function money(n) {
   return x.toFixed(2);
 }
 
-function renderInvoiceHtml({ theme, tokens, invoice, payment }) {
+function renderInvoiceHtml({ theme, tokens, invoice, payment, brand, watermarkText }) {
   const t = tokens || {};
   const inv = invoice || {};
   const items = Array.isArray(inv.items) ? inv.items : [];
+  const brandName = escapeHtml(brand?.name || "Your Company");
+  const brandLogoUrl = typeof brand?.logoUrl === "string" ? brand.logoUrl : "";
+  const wm = watermarkText ? escapeHtml(watermarkText) : "";
 
   const subtotal = items.reduce((acc, it) => acc + Number(it.quantity || 0) * Number(it.price || 0), 0);
   const taxAmount = subtotal * (Number(inv.tax || 0) / 100);
@@ -65,6 +68,35 @@ ${cssVars}
         padding: 18px;
         position: relative;
         overflow: visible;
+      }
+
+      .watermark {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .watermark span {
+        font-size: 54px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        transform: rotate(-20deg);
+        color: rgba(0,0,0,0.08);
+        white-space: nowrap;
+      }
+      .invoice-inner { position: relative; z-index: 1; }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+      .brand img {
+        display: block;
+        object-fit: contain;
       }
 
       .variant-grid {}
@@ -144,6 +176,7 @@ ${cssVars}
   </head>
   <body>
     <div class="invoice variant-${variant}">
+      ${wm ? `<div class="watermark"><span>${wm}</span></div>` : ""}
       <div class="invoice-inner">
       <div class="row ${variant === "luxury" ? "" : ""}">
         <div>
@@ -152,7 +185,16 @@ ${cssVars}
           <div class="muted">#${escapeHtml(inv.invoiceNumber || "")}</div>
         </div>
         <div style="text-align: end;">
-          <div style="font-weight: 700;">Your Company</div>
+          <div class="brand">
+            ${
+              t.showLogo && brandLogoUrl
+                ? `<img alt="Logo" src="${escapeHtml(brandLogoUrl)}" style="height: ${
+                    t.logoSize === "lg" ? 64 : t.logoSize === "sm" ? 36 : 48
+                  }px; width: auto;" />`
+                : ""
+            }
+            <div style="font-weight: 700;">${brandName}</div>
+          </div>
         </div>
       </div>
 

@@ -10,6 +10,7 @@ import { renderInvoiceHtml } from "@/components/invoice/invoice-html";
 import { renderToStream } from "@react-pdf/renderer";
 import { InvoicePdf } from "@/components/invoice/invoice-pdf";
 import React from "react";
+import { effectivePlanForUser } from "@/lib/plan-gating";
 
 export const runtime = "nodejs";
 
@@ -62,6 +63,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             defaultInvoiceStyle: true,
             instapayUrl: true,
             vodafoneCashNumber: true,
+            plan: true,
+            planExpiresAt: true,
+            brandName: true,
+            brandLogoUrl: true,
           },
         },
       },
@@ -73,6 +78,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     const theme = getThemeById(invoice.template);
     const tokens = buildEffectiveTokens(theme.tokens, invoice.user.defaultInvoiceStyle, invoice.style);
+    const effectivePlan = effectivePlanForUser(invoice.user, new Date());
 
     const html = renderInvoiceHtml({
       theme: { id: theme.id, direction: theme.direction, layoutVariant: theme.layoutVariant },
@@ -92,6 +98,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         instapayUrl: invoice.user.instapayUrl ?? null,
         vodafoneCashNumber: invoice.user.vodafoneCashNumber ?? null,
       },
+      brand: {
+        name: invoice.user.brandName ?? null,
+        logoUrl: invoice.user.brandLogoUrl ?? null,
+      },
+      watermarkText: effectivePlan === "FREE" ? "Created with Hesaby" : "",
     });
 
     let pdf: Buffer;

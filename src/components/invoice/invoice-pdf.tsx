@@ -1,5 +1,6 @@
-import { Document, Link, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Link, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 import { mergeInvoiceStyle } from "@/components/invoice/invoice-style";
+import { effectivePlanForUser } from "@/lib/plan-gating";
 
 function money(n: number) {
   return Number.isFinite(n) ? n.toFixed(2) : "0.00";
@@ -7,6 +8,10 @@ function money(n: number) {
 
 export const InvoicePdf = ({ invoice }: { invoice: any }) => {
   const effectiveStyle = mergeInvoiceStyle(invoice?.user?.defaultInvoiceStyle, invoice?.style);
+  const effectivePlan = effectivePlanForUser(invoice?.user, new Date());
+  const watermarkText = effectivePlan === "FREE" ? "Created with Hesaby" : "";
+  const brandName = invoice?.user?.brandName || "Your Company";
+  const brandLogoUrl = invoice?.user?.brandLogoUrl || "";
 
   const fontFamily =
     effectiveStyle.fontFamily === "mono"
@@ -109,13 +114,50 @@ export const InvoicePdf = ({ invoice }: { invoice: any }) => {
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.wrap}>
+          {watermarkText ? (
+            <View
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                right: 0,
+                bottom: 0,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 54,
+                  letterSpacing: 6,
+                  textTransform: "uppercase",
+                  opacity: 0.08,
+                  transform: "rotate(-20deg)",
+                }}
+              >
+                {watermarkText}
+              </Text>
+            </View>
+          ) : null}
+
           <View style={styles.header}>
             <View>
               <Text style={styles.title}>INVOICE</Text>
               <Text style={styles.subtitle}>#{invoice.invoiceNumber}</Text>
             </View>
             <View style={{ alignItems: "flex-end" }}>
-              <Text style={styles.strong}>Your Company</Text>
+              {effectiveStyle.showLogo && brandLogoUrl ? (
+                <Image
+                  src={brandLogoUrl}
+                  style={{
+                    width: effectiveStyle.logoSize === "lg" ? 80 : effectiveStyle.logoSize === "sm" ? 48 : 64,
+                    height: effectiveStyle.logoSize === "lg" ? 80 : effectiveStyle.logoSize === "sm" ? 48 : 64,
+                    objectFit: "contain",
+                    marginBottom: 8,
+                  }}
+                />
+              ) : null}
+              <Text style={styles.strong}>{brandName}</Text>
             </View>
           </View>
 

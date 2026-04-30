@@ -3,5 +3,6 @@ export function renderInvoiceHtml(args: {
   tokens: Record<string, any>;
   invoice: any;
   payment: { instapayUrl?: string | null; vodafoneCashNumber?: string | null };
+  brand?: { name?: string | null; logoUrl?: string | null };
+  watermarkText?: string;
 }): string;
-

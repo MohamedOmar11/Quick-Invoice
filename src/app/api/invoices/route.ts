@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { effectivePlanForUser, freeMonthlyInvoiceLimit, isTemplateAllowedForPlan } from "@/lib/plan-gating";
 
 export async function POST(req: Request) {
   try {
@@ -33,17 +34,15 @@ export async function POST(req: Request) {
     });
 
     const now = new Date();
-    const effectivePlan =
-      user?.plan === "PRO" && user.planExpiresAt && user.planExpiresAt < now ? "FREE" : user?.plan ?? session.user.plan;
+    const effectivePlan = effectivePlanForUser(user, now);
 
-    if (user?.plan === "PRO" && user.planExpiresAt && user.planExpiresAt < now) {
+    if (user?.plan === "PRO" && user.planExpiresAt && new Date(user.planExpiresAt) < now) {
       await prisma.user.update({
         where: { id: session.user.id },
         data: { plan: "FREE", planExpiresAt: null },
       });
     }
 
-    // Check plan limits (Free = 5/month)
     if (effectivePlan === "FREE") {
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
@@ -56,10 +55,16 @@ export async function POST(req: Request) {
         },
       });
 
-      if (invoiceCount >= 5) {
+      if (invoiceCount >= freeMonthlyInvoiceLimit()) {
         return new NextResponse("Free plan limit reached", { status: 403 });
       }
+
+      if (!isTemplateAllowedForPlan("FREE", template)) {
+        return new NextResponse("Upgrade to Pro to use this template", { status: 403 });
+      }
     }
+
+    const styleToSave = effectivePlan === "FREE" ? null : style;
 
     const invoice = await prisma.invoice.create({
       data: {
@@ -73,7 +78,7 @@ export async function POST(req: Request) {
         tax,
         notes,
         template,
-        style,
+        style: styleToSave,
         items,
         subtotal,
         total,

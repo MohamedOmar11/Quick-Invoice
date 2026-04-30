@@ -21,11 +21,15 @@ export function InvoicePreview({
   data,
   payment,
   direction,
+  brand,
+  watermarkText,
 }: {
   style: InvoiceStyle;
   data: InvoicePreviewData;
   payment?: { instapayUrl?: string | null; vodafoneCashNumber?: string | null };
   direction?: "ltr" | "rtl";
+  brand?: { name?: string | null; logoUrl?: string | null };
+  watermarkText?: string;
 }) {
   const subtotal = data.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
   const taxAmount = subtotal * (data.tax / 100);
@@ -57,6 +61,8 @@ export function InvoicePreview({
       ? "text-right"
       : "text-left";
   const logoPx = style.logoSize === "lg" ? 80 : style.logoSize === "sm" ? 48 : 64;
+  const brandName = brand?.name || "Your Company";
+  const logoUrl = brand?.logoUrl || "";
 
   return (
     <div
@@ -72,6 +78,13 @@ export function InvoicePreview({
         borderStyle: "solid",
       }}
     >
+      {watermarkText ? (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none" aria-hidden>
+          <div className="text-5xl tracking-[0.25em] uppercase rotate-[-20deg] text-black/10">
+            {watermarkText}
+          </div>
+        </div>
+      ) : null}
       <div className={`flex items-start mb-10 ${style.headerLayout === "center" ? "justify-center" : "justify-between"}`}>
         <div className={`${headerAlign} ${style.headerLayout === "split" ? "" : "flex-1"}`}>
           <div className={`text-xs font-semibold mb-2 ${labelClass}`} style={{ fontSize: style.labelFontSize, color: style.mutedColor }}>
@@ -96,20 +109,33 @@ export function InvoicePreview({
         {style.headerLayout === "split" && (
           <div className="text-right">
             {style.showLogo && (
-              <div
-                className="bg-gray-100 rounded-md flex items-center justify-center font-bold mb-4 ml-auto"
-                style={{
-                  width: logoPx,
-                  height: logoPx,
-                  color: style.mutedColor,
-                  backgroundColor: "#f3f4f6",
-                }}
-              >
-                LOGO
-              </div>
+              logoUrl ? (
+                <img
+                  alt="Logo"
+                  src={logoUrl}
+                  className="rounded-md mb-4 ml-auto bg-white"
+                  style={{
+                    width: logoPx,
+                    height: logoPx,
+                    objectFit: "contain",
+                  }}
+                />
+              ) : (
+                <div
+                  className="bg-gray-100 rounded-md flex items-center justify-center font-bold mb-4 ml-auto"
+                  style={{
+                    width: logoPx,
+                    height: logoPx,
+                    color: style.mutedColor,
+                    backgroundColor: "#f3f4f6",
+                  }}
+                >
+                  LOGO
+                </div>
+              )
             )}
             <div className="font-semibold" style={{ color: style.textColor, fontSize: style.bodyFontSize }}>
-              Your Company
+              {brandName}
             </div>
           </div>
         )}
@@ -310,9 +336,6 @@ export function InvoicePreview({
         </div>
       )}
 
-      <div className="absolute bottom-8 left-8 text-xs text-gray-300 font-medium tracking-widest uppercase">
-        Created with Hesaby
-      </div>
     </div>
   );
 }

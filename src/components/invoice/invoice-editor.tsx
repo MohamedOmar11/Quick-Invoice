@@ -5,6 +5,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,8 +43,11 @@ export type InvoiceFormData = z.infer<typeof invoiceSchema>;
 export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
   const [userDefaultStyle, setUserDefaultStyle] = useState<any>(null);
   const [userPayment, setUserPayment] = useState<{ instapayUrl?: string | null; vodafoneCashNumber?: string | null } | null>(null);
+  const [userBrand, setUserBrand] = useState<{ name?: string | null; logoUrl?: string | null } | null>(null);
+  const isFree = (session?.user as any)?.plan === "FREE";
   const defaultValues: InvoiceFormData = initialData || {
     invoiceNumber: `INV-${Math.floor(Math.random() * 10000)}`,
     clientName: "",
@@ -105,10 +109,25 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
             instapayUrl: data.instapayUrl ?? null,
             vodafoneCashNumber: data.vodafoneCashNumber ?? null,
           });
+          setUserBrand({
+            name: data.brandName ?? null,
+            logoUrl: data.brandLogoUrl ?? null,
+          });
         }
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!isFree) return;
+    const current = form.getValues("template");
+    if (current !== "minimal-corporate") {
+      form.setValue("template", "minimal-corporate");
+    }
+    if (form.getValues("style")) {
+      form.setValue("style", undefined);
+    }
+  }, [form, isFree]);
 
   const handleSave = async (data: InvoiceFormData) => {
     setSaving(true);
@@ -119,7 +138,7 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, subtotal, total, taxAmount }),
+        body: JSON.stringify({ ...data, style: isFree ? undefined : data.style, subtotal, total, taxAmount }),
       });
 
       if (!res.ok) {
@@ -231,14 +250,16 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
               <Select
                 value={selectedTheme.id}
                 onValueChange={(v) => {
-                  if (v) form.setValue("template", v);
+                  if (!v) return;
+                  if (isFree && v !== "minimal-corporate") return;
+                  form.setValue("template", v);
                 }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Theme" />
                 </SelectTrigger>
                 <SelectContent>
-                  {themes.map((t) => (
+                  {(isFree ? themes.filter((t) => t.id === "minimal-corporate") : themes).map((t) => (
                     <SelectItem key={t.id} value={t.id}>
                       {t.name}
                     </SelectItem>
@@ -248,11 +269,17 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
             </div>
           </div>
 
-          <InvoiceStylePanel
-            title="Style (this invoice)"
-            value={watchAll.style}
-            onChange={(next) => form.setValue("style", next)}
-          />
+          {isFree ? (
+            <div className="rounded-lg border bg-muted/10 p-4 text-sm text-muted-foreground">
+              Style customization is available on the Pro plan.
+            </div>
+          ) : (
+            <InvoiceStylePanel
+              title="Style (this invoice)"
+              value={watchAll.style}
+              onChange={(next) => form.setValue("style", next)}
+            />
+          )}
 
           <div className="space-y-4">
             <h3 className="font-semibold">Client Details</h3>
@@ -350,6 +377,8 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
           }}
           payment={userPayment ?? undefined}
           direction={selectedTheme.direction}
+          brand={userBrand ?? undefined}
+          watermarkText={isFree ? "Created with Hesaby" : undefined}
         />
       </div>
     </div>
