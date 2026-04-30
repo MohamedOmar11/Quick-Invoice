@@ -1,4 +1,5 @@
 import type { InvoiceStyle } from "@/components/invoice/invoice-style";
+import { getInvoiceCopy } from "@/components/invoice/invoice-copy";
 
 export type InvoicePreviewData = {
   invoiceNumber: string;
@@ -17,6 +18,7 @@ function money(n: number) {
 }
 
 export function InvoicePreview({
+  themeId,
   style,
   data,
   payment,
@@ -24,6 +26,7 @@ export function InvoicePreview({
   brand,
   watermarkText,
 }: {
+  themeId?: string;
   style: InvoiceStyle;
   data: InvoicePreviewData;
   payment?: { instapayUrl?: string | null; vodafoneCashNumber?: string | null };
@@ -31,6 +34,7 @@ export function InvoicePreview({
   brand?: { name?: string | null; logoUrl?: string | null };
   watermarkText?: string;
 }) {
+  const copy = getInvoiceCopy(themeId);
   const subtotal = data.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
   const taxAmount = subtotal * (data.tax / 100);
   const total = subtotal + taxAmount;
@@ -68,7 +72,7 @@ export function InvoicePreview({
       ? "text-right"
       : "text-left";
   const logoPx = style.logoSize === "lg" ? 120 : style.logoSize === "sm" ? 72 : 96;
-  const brandName = brand?.name || "Your Company";
+  const brandName = brand?.name || copy.yourCompany;
   const logoUrl = brand?.logoUrl || "";
 
   return (
@@ -96,7 +100,7 @@ export function InvoicePreview({
       <div className={`flex items-start mb-10 ${style.headerLayout === "center" ? "justify-center" : "justify-between"}`}>
         <div className={`${headerAlign} ${style.headerLayout === "split" ? "" : "flex-1"}`}>
           <div className={`text-xs font-semibold mb-2 ${labelClass}`} style={{ fontSize: style.labelFontSize, color: style.mutedColor }}>
-            Invoice
+            {copy.invoiceKicker}
           </div>
           <h1
             className="tracking-tighter"
@@ -107,7 +111,7 @@ export function InvoicePreview({
               lineHeight: 1.05,
             }}
           >
-            INVOICE
+            {copy.invoiceTitle}
           </h1>
           <div style={{ color: style.mutedColor, fontSize: style.bodyFontSize }}>
             #{data.invoiceNumber}
@@ -138,7 +142,7 @@ export function InvoicePreview({
                     backgroundColor: "#f3f4f6",
                   }}
                 >
-                  LOGO
+                  {copy.logoPlaceholder}
                 </div>
               )
             )}
@@ -152,23 +156,23 @@ export function InvoicePreview({
       <div className="flex justify-between mb-8 pb-5" style={{ borderBottomWidth: 1, borderBottomColor: style.borderColor, borderBottomStyle: "solid" }}>
         <div>
           <p className={`font-semibold mb-1 ${labelClass}`} style={{ fontSize: style.labelFontSize, color: style.mutedColor }}>
-            Bill To
+            {copy.billTo}
           </p>
           <p className="font-semibold" style={{ fontSize: style.bodyFontSize + 4, color: style.textColor }}>
-            {data.clientName || "Client Name"}
+            {data.clientName || copy.clientNamePlaceholder}
           </p>
           {data.clientEmail && <p style={{ color: style.mutedColor, fontSize: style.bodyFontSize }}>{data.clientEmail}</p>}
         </div>
         <div className="text-right">
           <div className="mb-4">
             <p className={`font-semibold mb-1 ${labelClass}`} style={{ fontSize: style.labelFontSize, color: style.mutedColor }}>
-              Issue Date
+              {copy.issueDate}
             </p>
             <p style={{ fontSize: style.bodyFontSize }}>{data.issueDate}</p>
           </div>
           <div>
             <p className={`font-semibold mb-1 ${labelClass}`} style={{ fontSize: style.labelFontSize, color: style.mutedColor }}>
-              Due Date
+              {copy.dueDate}
             </p>
             <p style={{ fontSize: style.bodyFontSize }}>{data.dueDate}</p>
           </div>
@@ -193,16 +197,16 @@ export function InvoicePreview({
             }}
           >
             <th className={`text-left py-3 ${labelClass}`} style={{ paddingLeft: cellPad, paddingRight: cellPad, fontSize: style.labelFontSize, color: style.mutedColor }}>
-              Description
+              {copy.description}
             </th>
             <th className={`text-right py-3 ${labelClass}`} style={{ paddingLeft: cellPad, paddingRight: cellPad, fontSize: style.labelFontSize, color: style.mutedColor }}>
-              Qty
+              {copy.qty}
             </th>
             <th className={`text-right py-3 ${labelClass}`} style={{ paddingLeft: cellPad, paddingRight: cellPad, fontSize: style.labelFontSize, color: style.mutedColor }}>
-              Price
+              {copy.price}
             </th>
             <th className={`text-right py-3 ${labelClass}`} style={{ paddingLeft: cellPad, paddingRight: cellPad, fontSize: style.labelFontSize, color: style.mutedColor }}>
-              Amount
+              {copy.amount}
             </th>
           </tr>
         </thead>
@@ -228,7 +232,7 @@ export function InvoicePreview({
                   borderRightStyle: "solid",
                 }}
               >
-                {item.title || "Item description"}
+                {item.title || copy.itemPlaceholder}
               </td>
               <td
                 className="text-right py-4"
@@ -276,14 +280,16 @@ export function InvoicePreview({
       <div className="flex justify-end mb-10">
         <div className="w-72 space-y-3">
           <div className="flex justify-between text-sm" style={{ color: style.mutedColor, fontSize: style.bodyFontSize }}>
-            <span>Subtotal</span>
+            <span>{copy.subtotal}</span>
             <span>
               {money(subtotal)} {data.currency}
             </span>
           </div>
           {data.tax > 0 && (
             <div className="flex justify-between text-sm" style={{ color: style.mutedColor, fontSize: style.bodyFontSize }}>
-              <span>Tax ({data.tax}%)</span>
+              <span>
+                {copy.tax} ({data.tax}%)
+              </span>
               <span>
                 {money(taxAmount)} {data.currency}
               </span>
@@ -299,7 +305,7 @@ export function InvoicePreview({
               fontSize: style.bodyFontSize + 4,
             }}
           >
-            <span>Total</span>
+            <span>{copy.total}</span>
             <span>
               {money(total)} {data.currency}
             </span>
@@ -309,7 +315,7 @@ export function InvoicePreview({
 
       {data.notes && (
         <div className="mt-10 pt-6 text-sm" style={{ borderTopWidth: 1, borderTopColor: style.borderColor, borderTopStyle: "solid", color: style.mutedColor, fontSize: style.bodyFontSize }}>
-          <p className="font-semibold mb-2" style={{ color: style.textColor }}>Notes</p>
+          <p className="font-semibold mb-2" style={{ color: style.textColor }}>{copy.notes}</p>
           <p className="whitespace-pre-wrap">{data.notes}</p>
         </div>
       )}
@@ -327,7 +333,7 @@ export function InvoicePreview({
         >
           <div className="flex flex-wrap gap-4 items-center justify-between">
             <div>
-              {payment?.vodafoneCashNumber && <div>Vodafone Cash: {payment.vodafoneCashNumber}</div>}
+              {payment?.vodafoneCashNumber && <div>{copy.vodafoneCash}: {payment.vodafoneCashNumber}</div>}
             </div>
             {payment?.instapayUrl && (
               <a
@@ -337,7 +343,7 @@ export function InvoicePreview({
                 className="px-4 py-2 rounded-md text-white font-medium"
                 style={{ backgroundColor: style.accentColor }}
               >
-                Pay with InstaPay
+                {copy.payWithInstapay}
               </a>
             )}
           </div>

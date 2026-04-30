@@ -2,6 +2,7 @@ import { Document, Link, Page, Text, View, StyleSheet, Image } from "@react-pdf/
 import { buildInvoiceStyle } from "@/components/invoice/invoice-style";
 import { effectivePlanForUser } from "@/lib/plan-gating";
 import { getThemeById } from "@/components/invoice/themes";
+import { getInvoiceCopy } from "@/components/invoice/invoice-copy";
 
 function money(n: number) {
   return Number.isFinite(n) ? n.toFixed(2) : "0.00";
@@ -12,7 +13,8 @@ export const InvoicePdf = ({ invoice }: { invoice: any }) => {
   const effectiveStyle = buildInvoiceStyle(theme.tokens, invoice?.user?.defaultInvoiceStyle, invoice?.style);
   const effectivePlan = effectivePlanForUser(invoice?.user, new Date());
   const watermarkText = effectivePlan === "FREE" ? "Created with Hesaby" : "";
-  const brandName = invoice?.user?.brandName || "Your Company";
+  const copy = getInvoiceCopy(theme.id);
+  const brandName = invoice?.user?.brandName || copy.yourCompany;
   const brandLogoUrl = invoice?.user?.brandLogoUrl || "";
 
   const fontFamily =
@@ -144,7 +146,7 @@ export const InvoicePdf = ({ invoice }: { invoice: any }) => {
 
           <View style={styles.header}>
             <View>
-              <Text style={styles.title}>INVOICE</Text>
+              <Text style={styles.title}>{copy.invoiceTitle}</Text>
               <Text style={styles.subtitle}>#{invoice.invoiceNumber}</Text>
             </View>
             <View style={{ alignItems: "flex-end" }}>
@@ -165,24 +167,24 @@ export const InvoicePdf = ({ invoice }: { invoice: any }) => {
 
           <View style={styles.metaRow}>
             <View>
-              <Text style={styles.label}>Bill To</Text>
+              <Text style={styles.label}>{copy.billTo}</Text>
               <Text style={styles.strong}>{invoice.clientName}</Text>
               {invoice.clientEmail ? <Text>{invoice.clientEmail}</Text> : null}
             </View>
             <View style={{ alignItems: "flex-end" }}>
-              <Text style={styles.label}>Issue Date</Text>
+              <Text style={styles.label}>{copy.issueDate}</Text>
               <Text>{new Date(invoice.issueDate).toLocaleDateString()}</Text>
-              <Text style={[styles.label, { marginTop: 8 }]}>Due Date</Text>
+              <Text style={[styles.label, { marginTop: 8 }]}>{copy.dueDate}</Text>
               <Text>{new Date(invoice.dueDate).toLocaleDateString()}</Text>
             </View>
           </View>
 
           <View style={styles.table}>
             <View style={styles.tableHeader}>
-              <Text style={styles.cellDesc}>Description</Text>
-              <Text style={styles.cell}>Qty</Text>
-              <Text style={styles.cell}>Price</Text>
-              <Text style={[styles.cell, { borderRightWidth: 0 }]}>Amount</Text>
+              <Text style={styles.cellDesc}>{copy.description}</Text>
+              <Text style={styles.cell}>{copy.qty}</Text>
+              <Text style={styles.cell}>{copy.price}</Text>
+              <Text style={[styles.cell, { borderRightWidth: 0 }]}>{copy.amount}</Text>
             </View>
             {invoice.items.map((item: any, i: number) => (
               <View
@@ -204,21 +206,23 @@ export const InvoicePdf = ({ invoice }: { invoice: any }) => {
 
           <View style={styles.totals}>
             <View style={styles.totalsRow}>
-              <Text>Subtotal</Text>
+              <Text>{copy.subtotal}</Text>
               <Text>
                 {money(subtotal)} {invoice.currency}
               </Text>
             </View>
             {invoice.tax > 0 ? (
               <View style={styles.totalsRow}>
-                <Text>Tax ({invoice.tax}%)</Text>
+                <Text>
+                  {copy.tax} ({invoice.tax}%)
+                </Text>
                 <Text>
                   {money(taxAmount)} {invoice.currency}
                 </Text>
               </View>
             ) : null}
             <View style={styles.totalsStrong}>
-              <Text style={styles.strong}>Total</Text>
+              <Text style={styles.strong}>{copy.total}</Text>
               <Text style={styles.strong}>
                 {money(total)} {invoice.currency}
               </Text>
@@ -227,7 +231,7 @@ export const InvoicePdf = ({ invoice }: { invoice: any }) => {
 
           {invoice.notes ? (
             <View style={styles.notes}>
-              <Text style={styles.strong}>Notes:</Text>
+              <Text style={styles.strong}>{copy.notes}:</Text>
               <Text>{invoice.notes}</Text>
             </View>
           ) : null}
@@ -236,13 +240,13 @@ export const InvoicePdf = ({ invoice }: { invoice: any }) => {
             <View style={styles.footer}>
               {invoice?.user?.instapayUrl ? (
                 <View style={{ marginBottom: 6 }}>
-                  <Text>InstaPay:</Text>
+                  <Text>{copy.instapay}:</Text>
                   <Link src={invoice.user.instapayUrl} style={{ color: effectiveStyle.accentColor }}>
                     {invoice.user.instapayUrl}
                   </Link>
                 </View>
               ) : null}
-              {invoice?.user?.vodafoneCashNumber ? <Text>Vodafone Cash: {invoice.user.vodafoneCashNumber}</Text> : null}
+              {invoice?.user?.vodafoneCashNumber ? <Text>{copy.vodafoneCash}: {invoice.user.vodafoneCashNumber}</Text> : null}
             </View>
           ) : null}
         </View>

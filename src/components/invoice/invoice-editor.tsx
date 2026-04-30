@@ -376,6 +376,7 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
       {/* Live Preview */}
       <div className="w-full lg:w-1/2 bg-muted/30 rounded-xl p-4 lg:p-8 overflow-y-auto border shadow-inner">
         <InvoicePreview
+          themeId={selectedTheme.id}
           style={buildInvoiceStyle(selectedTheme.tokens, userDefaultStyle, watchAll.style)}
           data={{
             invoiceNumber: watchAll.invoiceNumber,

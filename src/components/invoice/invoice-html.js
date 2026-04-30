@@ -1,4 +1,5 @@
 const { sanitizeInvoiceStyle } = require("../../lib/invoice-style-validation");
+const { getInvoiceCopy } = require("./invoice-copy");
 
 function escapeHtml(s) {
   return String(s ?? "")
@@ -19,7 +20,8 @@ function renderInvoiceHtml({ theme, tokens, invoice, payment, brand, watermarkTe
   const t = sanitizeInvoiceStyle(tokens || {});
   const inv = invoice || {};
   const items = Array.isArray(inv.items) ? inv.items : [];
-  const brandName = escapeHtml(brand?.name || "Your Company");
+  const copy = getInvoiceCopy(theme?.id);
+  const brandName = escapeHtml(brand?.name || copy.yourCompany);
   const brandLogoUrl = typeof brand?.logoUrl === "string" ? brand.logoUrl : "";
   const wm = watermarkText ? escapeHtml(watermarkText) : "";
 
@@ -42,11 +44,11 @@ function renderInvoiceHtml({ theme, tokens, invoice, payment, brand, watermarkTe
   const variant = escapeHtml(theme?.layoutVariant || "grid");
 
   return `<!doctype html>
-<html lang="en" dir="${dir}">
+<html lang="${copy.lang}" dir="${dir}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Invoice ${escapeHtml(inv.invoiceNumber || "")}</title>
+    <title>${escapeHtml(copy.invoiceKicker)} ${escapeHtml(inv.invoiceNumber || "")}</title>
     <style>
       :root {
 --fontStack: ${fontStack};
@@ -182,8 +184,8 @@ ${cssVars}
       <div class="invoice-inner">
       <div class="row ${variant === "luxury" ? "" : ""}">
         <div>
-          <div class="label muted">Invoice</div>
-          <h1 class="title">INVOICE</h1>
+          <div class="label muted">${escapeHtml(copy.invoiceKicker)}</div>
+          <h1 class="title">${escapeHtml(copy.invoiceTitle)}</h1>
           <div class="muted">#${escapeHtml(inv.invoiceNumber || "")}</div>
         </div>
         <div style="text-align: end;">
@@ -202,17 +204,17 @@ ${cssVars}
 
       <div class="row divider meta ${variant === "cards" ? "card" : ""}">
         <div style="flex: 1;">
-          <div class="label muted">Bill To</div>
+          <div class="label muted">${escapeHtml(copy.billTo)}</div>
           <div style="font-weight: 700; font-size: 16px;">${escapeHtml(inv.clientName || "")}</div>
           ${inv.clientEmail ? `<div class="muted">${escapeHtml(inv.clientEmail)}</div>` : ""}
         </div>
         <div style="min-width: 220px; text-align: end;">
           <div>
-            <div class="label muted">Issue Date</div>
+            <div class="label muted">${escapeHtml(copy.issueDate)}</div>
             <div>${escapeHtml(inv.issueDate || "")}</div>
           </div>
           <div style="margin-top: 10px;">
-            <div class="label muted">Due Date</div>
+            <div class="label muted">${escapeHtml(copy.dueDate)}</div>
             <div>${escapeHtml(inv.dueDate || "")}</div>
           </div>
         </div>
@@ -222,10 +224,10 @@ ${cssVars}
         <table>
           <thead>
             <tr>
-              <th>Description</th>
-              <th class="num">Qty</th>
-              <th class="num">Price</th>
-              <th class="num">Amount</th>
+              <th>${escapeHtml(copy.description)}</th>
+              <th class="num">${escapeHtml(copy.qty)}</th>
+              <th class="num">${escapeHtml(copy.price)}</th>
+              <th class="num">${escapeHtml(copy.amount)}</th>
             </tr>
           </thead>
           <tbody>
@@ -249,19 +251,19 @@ ${cssVars}
       <div class="row keep-together ${variant === "cards" ? "card" : ""}" style="margin-top: 18px; justify-content: end;">
         <div style="width: 280px;">
           <div class="row muted" style="justify-content: space-between;">
-            <div>Subtotal</div>
+            <div>${escapeHtml(copy.subtotal)}</div>
             <div>${money(subtotal)} ${escapeHtml(inv.currency || "")}</div>
           </div>
           ${
             Number(inv.tax || 0) > 0
               ? `<div class="row muted" style="justify-content: space-between; margin-top: 8px;">
-                   <div>Tax (${escapeHtml(inv.tax)}%)</div>
+                   <div>${escapeHtml(copy.tax)} (${escapeHtml(inv.tax)}%)</div>
                    <div>${money(taxAmount)} ${escapeHtml(inv.currency || "")}</div>
                  </div>`
               : ""
           }
           <div class="row" style="justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--borderColor, #e5e7eb); font-weight: 800;">
-            <div>Total</div>
+            <div>${escapeHtml(copy.total)}</div>
             <div>${money(total)} ${escapeHtml(inv.currency || "")}</div>
           </div>
         </div>
@@ -270,7 +272,7 @@ ${cssVars}
       ${
         inv.notes
           ? `<div class="section divider">
-               <div style="font-weight: 700; margin-bottom: 6px;">Notes</div>
+               <div style="font-weight: 700; margin-bottom: 6px;">${escapeHtml(copy.notes)}</div>
                <div class="muted" style="white-space: pre-wrap;">${escapeHtml(inv.notes)}</div>
              </div>`
           : ""
@@ -279,11 +281,15 @@ ${cssVars}
       ${
         payment?.instapayUrl || payment?.vodafoneCashNumber
           ? `<div class="section divider">
-               ${payment?.vodafoneCashNumber ? `<div class="muted">Vodafone Cash: ${escapeHtml(payment.vodafoneCashNumber)}</div>` : ""}
+               ${
+                 payment?.vodafoneCashNumber
+                   ? `<div class="muted">${escapeHtml(copy.vodafoneCash)}: ${escapeHtml(payment.vodafoneCashNumber)}</div>`
+                   : ""
+               }
                ${
                  payment?.instapayUrl
                    ? `<div style="margin-top: 8px;">
-                        <a href="${escapeHtml(payment.instapayUrl)}" style="color: var(--accentColor, #111); text-decoration: underline;">Pay with InstaPay</a>
+                        <a href="${escapeHtml(payment.instapayUrl)}" style="color: var(--accentColor, #111); text-decoration: underline;">${escapeHtml(copy.payWithInstapay)}</a>
                       </div>`
                    : ""
                }
