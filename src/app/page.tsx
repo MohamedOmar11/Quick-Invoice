@@ -10,13 +10,16 @@ import { normalizePricing } from "@/lib/pricing";
 
 export default async function LandingPage() {
   const session = await getServerSession(authOptions);
-  const settings = await prisma.appSettings.upsert({
-    where: { id: "app" },
-    update: {},
-    create: { id: "app" },
-    select: { pricing: true },
-  });
-  const pricing = normalizePricing(settings.pricing);
+  let pricing: ReturnType<typeof normalizePricing> | null = null;
+  if (!session?.user?.id) {
+    const settings = await prisma.appSettings.upsert({
+      where: { id: "app" },
+      update: {},
+      create: { id: "app" },
+      select: { pricing: true },
+    });
+    pricing = normalizePricing(settings.pricing);
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -28,7 +31,9 @@ export default async function LandingPage() {
           </div>
           <nav className="hidden md:flex items-center gap-6">
             <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</Link>
-            <Link href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
+            {!session?.user?.id ? (
+              <Link href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
+            ) : null}
             <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">How it Works</Link>
           </nav>
           <div className="flex items-center gap-4">
@@ -125,76 +130,75 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* Pricing */}
-        <section id="pricing" className="py-24">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, transparent pricing</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Start for free, upgrade when you need more power.</p>
-            </div>
-            
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              {/* Free Plan */}
-              <div className="border rounded-3xl p-8 flex flex-col">
-                <h3 className="text-2xl font-semibold mb-2">Free</h3>
-                <div className="mb-6">
-                  <span className="text-5xl font-bold">0</span>
-                  <span className="text-muted-foreground"> {pricing.currency}/month</span>
-                </div>
-                <p className="text-muted-foreground mb-8">Perfect for freelancers just starting out.</p>
-                <ul className="space-y-4 mb-8 flex-1">
-                  {[
-                    "Up to 3 invoices per month",
-                    "1 basic template",
-                    "Standard PDF export",
-                    "Hesaby watermark"
-                  ].map((item, i) => (
-                    <li key={i} className="flex items-center gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-primary" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button variant="outline" className="w-full rounded-full h-12" asChild>
-                  <Link href="/register">Get Started</Link>
-                </Button>
+        {!session?.user?.id && pricing ? (
+          <section id="pricing" className="py-24">
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-16">
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, transparent pricing</h2>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Start for free, upgrade when you need more power.</p>
               </div>
+              
+              <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <div className="border rounded-3xl p-8 flex flex-col">
+                  <h3 className="text-2xl font-semibold mb-2">Free</h3>
+                  <div className="mb-6">
+                    <span className="text-5xl font-bold">0</span>
+                    <span className="text-muted-foreground"> {pricing.currency}/month</span>
+                  </div>
+                  <p className="text-muted-foreground mb-8">Perfect for freelancers just starting out.</p>
+                  <ul className="space-y-4 mb-8 flex-1">
+                    {[
+                      "Up to 3 invoices per month",
+                      "1 basic template",
+                      "Standard PDF export",
+                      "Hesaby watermark"
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-center gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-primary" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button variant="outline" className="w-full rounded-full h-12" asChild>
+                    <Link href="/register">Get Started</Link>
+                  </Button>
+                </div>
 
-              {/* Pro Plan */}
-              <div className="border rounded-3xl p-8 flex flex-col bg-primary text-primary-foreground relative overflow-hidden shadow-xl shadow-primary/20">
-                <div className="absolute top-0 right-0 bg-white/20 px-4 py-1 rounded-bl-xl text-sm font-medium">
-                  Most Popular
+                <div className="border rounded-3xl p-8 flex flex-col bg-primary text-primary-foreground relative overflow-hidden shadow-xl shadow-primary/20">
+                  <div className="absolute top-0 right-0 bg-white/20 px-4 py-1 rounded-bl-xl text-sm font-medium">
+                    Most Popular
+                  </div>
+                  <h3 className="text-2xl font-semibold mb-2">Pro</h3>
+                  <div className="mb-6">
+                    <span className="text-5xl font-bold">{pricing.proMonthly}</span>
+                    <span className="text-primary-foreground/80"> {pricing.currency}/month</span>
+                  </div>
+                  <p className="text-primary-foreground/80 mb-8">For established professionals who need more.</p>
+                  <div className="text-sm text-primary-foreground/80 mb-6">
+                    Yearly: {pricing.proYearly} {pricing.currency}/year • Lifetime: {pricing.lifetime} {pricing.currency} once
+                  </div>
+                  <ul className="space-y-4 mb-8 flex-1">
+                    {[
+                      "Unlimited invoices",
+                      "Premium templates",
+                      "Custom brand logo & colors",
+                      "No watermark",
+                      "Priority support"
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-center gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-white" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button variant="secondary" className="w-full rounded-full h-12 text-primary" asChild>
+                    <Link href="/register?plan=pro">Upgrade to Pro</Link>
+                  </Button>
                 </div>
-                <h3 className="text-2xl font-semibold mb-2">Pro</h3>
-                <div className="mb-6">
-                  <span className="text-5xl font-bold">{pricing.proMonthly}</span>
-                  <span className="text-primary-foreground/80"> {pricing.currency}/month</span>
-                </div>
-                <p className="text-primary-foreground/80 mb-8">For established professionals who need more.</p>
-                <div className="text-sm text-primary-foreground/80 mb-6">
-                  Yearly: {pricing.proYearly} {pricing.currency}/year • Lifetime: {pricing.lifetime} {pricing.currency} once
-                </div>
-                <ul className="space-y-4 mb-8 flex-1">
-                  {[
-                    "Unlimited invoices",
-                    "Premium templates",
-                    "Custom brand logo & colors",
-                    "No watermark",
-                    "Priority support"
-                  ].map((item, i) => (
-                    <li key={i} className="flex items-center gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-white" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button variant="secondary" className="w-full rounded-full h-12 text-primary" asChild>
-                  <Link href="/register?plan=pro">Upgrade to Pro</Link>
-                </Button>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        ) : null}
 
         {/* CTA */}
         <section className="py-24 bg-muted/30">
