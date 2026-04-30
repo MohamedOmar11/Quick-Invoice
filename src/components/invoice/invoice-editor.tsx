@@ -148,7 +148,7 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
     }
   }, [form, isFree]);
 
-  const handleSave = async (data: InvoiceFormData) => {
+  const persistInvoice = async (data: InvoiceFormData, { redirectOnCreate }: { redirectOnCreate: boolean }) => {
     setSaving(true);
     setStatus(null);
 
@@ -163,46 +163,40 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
       if (!res.ok) {
         const msg = await res.text();
         setStatus({ type: "error", message: msg || "Failed to save invoice." });
-        return;
+        return null;
       }
 
       const invoice = (await res.json()) as { id: string };
       form.setValue("id", invoice.id);
 
-      if (!data.id) {
+      if (!data.id && redirectOnCreate) {
         router.push(`/dashboard/invoice/${invoice.id}?saved=1`);
-        return;
+        return invoice.id;
       }
 
       setStatus({ type: "success", message: "Invoice saved." });
+      return invoice.id;
     } catch (e) {
       setStatus({ type: "error", message: "Failed to save invoice." });
+      return null;
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDownload = async () => {
-    const invoiceId = form.getValues("id") || initialData?.id;
-    if (!invoiceId) {
-      setStatus({ type: "error", message: "Save the invoice before downloading the PDF." });
-      return;
-    }
+  const handleDownload = form.handleSubmit(async (data) => {
     setExporting(true);
-    window.open(`/api/invoices/${invoiceId}/pdf`, "_blank");
+    const invoiceId = await persistInvoice({ ...data, id: form.getValues("id") || initialData?.id }, { redirectOnCreate: true });
+    if (invoiceId) window.open(`/api/invoices/${invoiceId}/pdf`, "_blank");
     window.setTimeout(() => setExporting(false), 1000);
-  };
+  });
 
-  const handlePrint = async () => {
-    const invoiceId = form.getValues("id") || initialData?.id;
-    if (!invoiceId) {
-      setStatus({ type: "error", message: "Save the invoice before printing." });
-      return;
-    }
+  const handlePrint = form.handleSubmit(async (data) => {
     setPrinting(true);
-    window.open(`/api/invoices/${invoiceId}/pdf`, "_blank");
+    const invoiceId = await persistInvoice({ ...data, id: form.getValues("id") || initialData?.id }, { redirectOnCreate: true });
+    if (invoiceId) window.open(`/api/invoices/${invoiceId}/pdf`, "_blank");
     window.setTimeout(() => setPrinting(false), 1000);
-  };
+  });
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 p-6 max-w-7xl mx-auto h-[calc(100vh-4rem)]">
@@ -231,7 +225,7 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={form.handleSubmit(handleSave)} disabled={saving} className="rounded-full">
+              <Button variant="outline" onClick={form.handleSubmit((data) => persistInvoice(data, { redirectOnCreate: true }))} disabled={saving} className="rounded-full">
                 <Save className="w-4 h-4 mr-2" /> Save
               </Button>
               <Button variant="outline" onClick={handlePrint} disabled={saving || printing} className="rounded-full">

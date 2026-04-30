@@ -1,13 +1,15 @@
 import { Document, Link, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
-import { mergeInvoiceStyle } from "@/components/invoice/invoice-style";
+import { buildInvoiceStyle } from "@/components/invoice/invoice-style";
 import { effectivePlanForUser } from "@/lib/plan-gating";
+import { getThemeById } from "@/components/invoice/themes";
 
 function money(n: number) {
   return Number.isFinite(n) ? n.toFixed(2) : "0.00";
 }
 
 export const InvoicePdf = ({ invoice }: { invoice: any }) => {
-  const effectiveStyle = mergeInvoiceStyle(invoice?.user?.defaultInvoiceStyle, invoice?.style);
+  const theme = getThemeById(invoice?.template || "minimal-corporate");
+  const effectiveStyle = buildInvoiceStyle(theme.tokens, invoice?.user?.defaultInvoiceStyle, invoice?.style);
   const effectivePlan = effectivePlanForUser(invoice?.user, new Date());
   const watermarkText = effectivePlan === "FREE" ? "Created with Hesaby" : "";
   const brandName = invoice?.user?.brandName || "Your Company";
