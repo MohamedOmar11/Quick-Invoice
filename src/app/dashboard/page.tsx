@@ -8,16 +8,29 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { normalizeClientFilter } from "@/lib/dashboard-filters";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ client?: string }>;
+}) {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.id) {
     return null;
   }
 
+  const sp = await searchParams;
+  const clientFilter = normalizeClientFilter(sp?.client);
+
   const invoices = await prisma.invoice.findMany({
-    where: { userId: session.user.id },
+    where: {
+      userId: session.user.id,
+      ...(clientFilter
+        ? { clientName: { contains: clientFilter, mode: "insensitive" } }
+        : {}),
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -37,14 +50,21 @@ export default async function DashboardPage() {
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-md">
+        <form className="relative flex-1 max-w-md" action="/dashboard" method="GET">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
+            name="client"
             type="search"
-            placeholder="Search invoices..."
+            defaultValue={clientFilter}
+            placeholder="Filter by client name..."
             className="pl-9 bg-background rounded-full"
           />
-        </div>
+        </form>
+        {clientFilter ? (
+          <Button asChild variant="outline" className="rounded-full">
+            <Link href="/dashboard">Clear</Link>
+          </Button>
+        ) : null}
       </div>
 
       {invoices.length === 0 ? (

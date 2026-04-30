@@ -58,7 +58,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/hesaby-logo.png" alt="Hesaby" width={210} height={56} className="h-14 w-auto" priority />
+            <Image src="/hesaby-logo.png" alt="Hesaby" width={270} height={72} className="h-16 w-auto" priority />
           </Link>
         </div>
 

@@ -27,6 +27,7 @@ export function UserSettingsForm({ plan }: { plan: string }) {
   const [defaultInvoiceStyle, setDefaultInvoiceStyle] = useState<any>(null);
   const [brandName, setBrandName] = useState("");
   const [brandLogoUrl, setBrandLogoUrl] = useState("");
+  const [brandLogoUrlInput, setBrandLogoUrlInput] = useState("");
 
   useEffect(() => {
     fetch("/api/user/settings")
@@ -38,6 +39,7 @@ export function UserSettingsForm({ plan }: { plan: string }) {
         setDefaultInvoiceStyle(data.defaultInvoiceStyle ?? null);
         setBrandName(data.brandName ?? "");
         setBrandLogoUrl(data.brandLogoUrl ?? "");
+        setBrandLogoUrlInput(data.brandLogoUrl ?? "");
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -110,12 +112,35 @@ export function UserSettingsForm({ plan }: { plan: string }) {
                     </div>
                   </div>
                 ) : null}
+                <div className="grid gap-3">
+                  <Input
+                    disabled={loading || saving}
+                    value={brandLogoUrlInput}
+                    onChange={(e) => setBrandLogoUrlInput(e.target.value)}
+                    placeholder="Paste logo URL (optional)"
+                  />
+                  <div className="flex justify-end">
+                    <Button
+                      variant="outline"
+                      className="rounded-full"
+                      disabled={loading || saving || !brandLogoUrlInput.trim()}
+                      onClick={() => {
+                        const url = brandLogoUrlInput.trim();
+                        setBrandLogoUrl(url);
+                        save({ brandLogoUrl: url });
+                      }}
+                    >
+                      Save Logo URL
+                    </Button>
+                  </div>
+                </div>
                 <UploadDropzone
                   endpoint="brandLogo"
                   onClientUploadComplete={(res) => {
                     const url = res?.[0]?.url;
                     if (url) {
                       setBrandLogoUrl(url);
+                      setBrandLogoUrlInput(url);
                       setStatus({ type: "success", message: "Logo uploaded." });
                       save({ brandLogoUrl: url });
                     }

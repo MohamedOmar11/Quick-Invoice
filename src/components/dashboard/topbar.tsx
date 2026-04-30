@@ -48,7 +48,7 @@ export function Topbar({
             />
             <SheetContent side="left" className="p-4">
               <div className="mb-4">
-                <Image src="/hesaby-logo.png" alt="Hesaby" width={210} height={56} className="h-10 w-auto" priority />
+                <Image src="/hesaby-logo.png" alt="Hesaby" width={270} height={72} className="h-12 w-auto" priority />
               </div>
               <SidebarNav />
               <div className="mt-6 border-t pt-4">

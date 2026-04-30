@@ -45,6 +45,13 @@ export function InvoicePreview({
       ? "font-serif"
       : "font-sans";
 
+  const fontFamily =
+    style.fontFamily === "mono"
+      ? "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace"
+      : style.fontFamily === "serif"
+      ? "ui-serif, Georgia, Cambria, \"Times New Roman\", Times, serif"
+      : "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, \"Apple Color Emoji\", \"Segoe UI Emoji\"";
+
   const borderWidth =
     style.borderStyle === "none" ? 0 : style.borderStyle === "medium" ? 2 : 1;
 
@@ -76,6 +83,7 @@ export function InvoicePreview({
         backgroundColor: style.backgroundColor,
         color: style.textColor,
         borderStyle: "solid",
+        fontFamily,
       }}
     >
       {watermarkText ? (
