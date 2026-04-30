@@ -1,3 +1,5 @@
+const { sanitizeInvoiceStyle } = require("../../lib/invoice-style-validation");
+
 function escapeHtml(s) {
   return String(s ?? "")
     .replaceAll("&", "&amp;")
@@ -14,7 +16,7 @@ function money(n) {
 }
 
 function renderInvoiceHtml({ theme, tokens, invoice, payment, brand, watermarkText }) {
-  const t = tokens || {};
+  const t = sanitizeInvoiceStyle(tokens || {});
   const inv = invoice || {};
   const items = Array.isArray(inv.items) ? inv.items : [];
   const brandName = escapeHtml(brand?.name || "Your Company");

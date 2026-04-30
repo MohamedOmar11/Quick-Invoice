@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { effectivePlanForUser, freeMonthlyInvoiceLimit, isTemplateAllowedForPlan } from "@/lib/plan-gating";
+import { validateInvoiceStyleStrict } from "@/lib/invoice-style-validation";
+import { logServerError } from "@/lib/safe-log";
 
 export async function POST(req: Request) {
   try {
@@ -64,7 +66,12 @@ export async function POST(req: Request) {
       }
     }
 
-    const styleToSave = effectivePlan === "FREE" ? null : style;
+    let styleToSave: any = effectivePlan === "FREE" ? null : null;
+    if (effectivePlan !== "FREE" && style != null) {
+      const v = validateInvoiceStyleStrict(style);
+      if (!v.ok) return new NextResponse("Invalid invoice style", { status: 400 });
+      styleToSave = v.value;
+    }
 
     const invoice = await prisma.invoice.create({
       data: {
@@ -87,7 +94,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(invoice);
   } catch (error) {
-    console.error("INVOICE_POST", error);
+    logServerError("INVOICE_POST", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -106,7 +113,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(invoices);
   } catch (error) {
-    console.error("INVOICE_GET", error);
+    logServerError("INVOICE_GET", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

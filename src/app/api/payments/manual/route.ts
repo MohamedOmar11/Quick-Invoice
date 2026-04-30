@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { normalizePricing } from "@/lib/pricing";
+import { logServerError } from "@/lib/safe-log";
 
 export async function POST(req: Request) {
   try {
@@ -52,7 +53,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(payment);
   } catch (error) {
-    console.error("MANUAL_PAYMENT_POST", error);
+    logServerError("MANUAL_PAYMENT_POST", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

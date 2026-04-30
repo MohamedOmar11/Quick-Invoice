@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 import { Adapter } from "next-auth/adapters";
 import { shouldRefreshAuthToken } from "@/lib/auth-token-refresh";
+import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rate-limit";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as Adapter,
@@ -30,10 +31,22 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Invalid credentials");
         }
+
+        const headers = (req as any)?.headers;
+        const ip = headers?.get ? getClientIpFromHeaders(headers) : "unknown";
+        const rate = checkRateLimit({
+          key: `login:${ip}:${String(credentials.email).toLowerCase()}`,
+          limit: 15,
+          windowMs: 10 * 60 * 1000,
+        });
+        if (!rate.ok) {
+          throw new Error("Too many attempts, try again later");
+        }
+
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });

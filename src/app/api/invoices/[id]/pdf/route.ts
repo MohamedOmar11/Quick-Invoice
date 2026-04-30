@@ -11,6 +11,7 @@ import { renderToStream } from "@react-pdf/renderer";
 import { InvoicePdf } from "@/components/invoice/invoice-pdf";
 import React from "react";
 import { effectivePlanForUser } from "@/lib/plan-gating";
+import { logServerError } from "@/lib/safe-log";
 
 export const runtime = "nodejs";
 
@@ -109,7 +110,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     try {
       pdf = await renderPdfWithChromium(html);
     } catch (error) {
-      console.error("PDF_CHROMIUM_ERROR", error);
+      logServerError("PDF_CHROMIUM_ERROR", error);
       pdf = await renderPdfWithReactPdf(invoice);
     }
 
@@ -122,7 +123,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       },
     });
   } catch (error) {
-    console.error("PDF_ERROR", error);
+    logServerError("PDF_ERROR", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

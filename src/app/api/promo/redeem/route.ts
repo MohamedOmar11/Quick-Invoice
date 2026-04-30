@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { entitlementForProduct } from "@/lib/entitlements";
+import { logServerError } from "@/lib/safe-log";
 
 export async function POST(req: Request) {
   try {
@@ -59,7 +60,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("PROMO_REDEEM_POST", error);
+    logServerError("PROMO_REDEEM_POST", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

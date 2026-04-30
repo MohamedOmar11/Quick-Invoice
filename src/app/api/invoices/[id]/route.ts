@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { effectivePlanForUser, isTemplateAllowedForPlan } from "@/lib/plan-gating";
+import { validateInvoiceStyleStrict } from "@/lib/invoice-style-validation";
+import { logServerError } from "@/lib/safe-log";
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -58,7 +60,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       return new NextResponse("Upgrade to Pro to use this template", { status: 403 });
     }
 
-    const styleToSave = effectivePlan === "FREE" ? null : style;
+    let styleToSave: any = effectivePlan === "FREE" ? null : null;
+    if (effectivePlan !== "FREE" && style != null) {
+      const v = validateInvoiceStyleStrict(style);
+      if (!v.ok) return new NextResponse("Invalid invoice style", { status: 400 });
+      styleToSave = v.value;
+    }
 
     const invoice = await prisma.invoice.update({
       where: { id: invoiceId },
@@ -81,7 +88,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     return NextResponse.json(invoice);
   } catch (error) {
-    console.error("INVOICE_PUT", error);
+    logServerError("INVOICE_PUT", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -110,7 +117,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
     return new NextResponse("Deleted", { status: 200 });
   } catch (error) {
-    console.error("INVOICE_DELETE", error);
+    logServerError("INVOICE_DELETE", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
