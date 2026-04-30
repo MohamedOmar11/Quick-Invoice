@@ -5,6 +5,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 import { Adapter } from "next-auth/adapters";
+import { shouldRefreshAuthToken } from "@/lib/auth-token-refresh";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as Adapter,
@@ -64,7 +65,21 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = user.role;
         token.plan = user.plan;
+        token.lastSync = Date.now();
       }
+
+      if (token?.id && shouldRefreshAuthToken((token as any).lastSync, 60_000)) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { role: true, plan: true },
+        });
+        if (dbUser) {
+          token.role = dbUser.role;
+          token.plan = dbUser.plan;
+          token.lastSync = Date.now();
+        }
+      }
+
       return token;
     },
   },
