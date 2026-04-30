@@ -107,10 +107,9 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
     setSaving(true);
     setStatus(null);
     try {
-      const body = buildInvoiceSaveRequest(data, { subtotal, total });
       const isNew = !data.id;
-      const url = isNew ? "/api/invoices" : `/api/invoices/${data.id}`;
-      const method = isNew ? "POST" : "PUT";
+      const { url, method } = buildInvoiceSaveRequest(data);
+      const body = { ...data, subtotal, total };
       const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       if (!res.ok) {
         const msg = await res.text();

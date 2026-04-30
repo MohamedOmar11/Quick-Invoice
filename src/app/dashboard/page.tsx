@@ -110,7 +110,7 @@ export default async function DashboardPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {invoices.map((invoice) => (
+                {invoices.map((invoice: any) => (
                   <TableRow key={invoice.id}>
                     <TableCell>
                       <div className="font-medium">
@@ -125,7 +125,7 @@ export default async function DashboardPage({
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground shrink-0">
-                          {(invoice.clientName || "C").split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("")}
+                          {(invoice.clientName || "C").split(" ").filter(Boolean).slice(0, 2).map((p: string) => p[0]?.toUpperCase()).join("")}
                         </div>
                         <span className="font-medium truncate max-w-[140px]">{invoice.clientName}</span>
                       </div>
@@ -147,10 +147,10 @@ export default async function DashboardPage({
 
           {/* Mobile card list */}
           <div className="sm:hidden divide-y">
-            {invoices.map((invoice) => (
+            {invoices.map((invoice: any) => (
               <div key={invoice.id} className="flex items-center gap-3 px-4 py-3">
                 <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground shrink-0">
-                  {(invoice.clientName || "C").split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("")}
+                  {(invoice.clientName || "C").split(" ").filter(Boolean).slice(0, 2).map((p: string) => p[0]?.toUpperCase()).join("")}
                 </div>
                 <div className="flex-1 min-w-0">
                   <Link href={`/dashboard/invoice/${invoice.id}`} className="font-medium text-sm hover:underline underline-offset-4 truncate block">
