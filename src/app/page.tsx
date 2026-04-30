@@ -5,6 +5,7 @@ import { ArrowRight, CheckCircle2, Zap, CreditCard, FileText } from "lucide-reac
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { ThemeToggle } from "@/components/dashboard/theme-toggle";
 import { prisma } from "@/lib/prisma";
 import { normalizePricing } from "@/lib/pricing";
 
@@ -36,7 +37,8 @@ export default async function LandingPage() {
             ) : null}
             <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">How it Works</Link>
           </nav>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
             {session?.user?.id ? (
               <>
                 <Button variant="outline" asChild className="rounded-full px-4">
