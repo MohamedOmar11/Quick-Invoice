@@ -132,7 +132,12 @@ export function Topbar({
                   Billing
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setLogoutOpen(true)} className="cursor-pointer text-destructive">
+              <DropdownMenuItem
+                variant="destructive"
+                className="cursor-pointer"
+                onClick={() => setLogoutOpen(true)}
+                onSelect={() => setLogoutOpen(true)}
+              >
                 Log out
               </DropdownMenuItem>
             </DropdownMenuContent>
