@@ -7,8 +7,43 @@ import puppeteer from "puppeteer-core";
 import { getThemeById } from "@/components/invoice/themes";
 import { buildEffectiveTokens } from "@/components/invoice/theme-tokens";
 import { renderInvoiceHtml } from "@/components/invoice/invoice-html";
+import { renderToStream } from "@react-pdf/renderer";
+import { InvoicePdf } from "@/components/invoice/invoice-pdf";
+import React from "react";
 
 export const runtime = "nodejs";
+
+async function renderPdfWithReactPdf(invoice: any) {
+  const stream = await renderToStream(InvoicePdf({ invoice }) as any);
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) {
+    chunks.push(Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
+}
+
+async function renderPdfWithChromium(html: string) {
+  const executablePath = await chromium.executablePath();
+  const browser = await puppeteer.launch({
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath,
+    headless: chromium.headless,
+  });
+
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: "load" });
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      preferCSSPageSize: true,
+    });
+    return Buffer.from(pdfBuffer);
+  } finally {
+    await browser.close();
+  }
+}
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -59,33 +94,22 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       },
     });
 
-    const executablePath = await chromium.executablePath();
-    const browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath,
-      headless: chromium.headless,
-    });
-
+    let pdf: Buffer;
     try {
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: "networkidle0" });
-      const pdfBuffer = await page.pdf({
-        format: "A4",
-        printBackground: true,
-        preferCSSPageSize: true,
-      });
-    
-      return new NextResponse(Buffer.from(pdfBuffer), {
-        headers: {
-          "Content-Type": "application/pdf",
-          "Content-Disposition": `inline; filename="invoice-${invoice.invoiceNumber}.pdf"`,
-          "Cache-Control": "no-store",
-        },
-      });
-    } finally {
-      await browser.close();
+      pdf = await renderPdfWithChromium(html);
+    } catch (error) {
+      console.error("PDF_CHROMIUM_ERROR", error);
+      pdf = await renderPdfWithReactPdf(invoice);
     }
+
+    const body = new Uint8Array(pdf);
+    return new NextResponse(body, {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `inline; filename="invoice-${invoice.invoiceNumber}.pdf"`,
+        "Cache-Control": "no-store",
+      },
+    });
   } catch (error) {
     console.error("PDF_ERROR", error);
     return new NextResponse("Internal Error", { status: 500 });
