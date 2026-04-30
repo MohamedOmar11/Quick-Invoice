@@ -27,9 +27,6 @@ export default async function LandingPage() {
           <div className="flex items-center gap-4">
             {session?.user?.id ? (
               <>
-                <Button variant="ghost" asChild className="rounded-full px-4">
-                  <Link href="/dashboard">Dashboard</Link>
-                </Button>
                 <Button variant="outline" asChild className="rounded-full px-4">
                   <Link href="/dashboard/invoice/new">Create Invoice</Link>
                 </Button>
@@ -67,9 +64,15 @@ export default async function LandingPage() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="lg" asChild className="rounded-full px-8 h-14 text-base w-full sm:w-auto">
-                <Link href="/register">
-                  Start for free <ArrowRight className="ml-2 w-5 h-5" />
-                </Link>
+                {session?.user?.id ? (
+                  <Link href="/dashboard">
+                    Dashboard <ArrowRight className="ml-2 w-5 h-5" />
+                  </Link>
+                ) : (
+                  <Link href="/register">
+                    Start for free <ArrowRight className="ml-2 w-5 h-5" />
+                  </Link>
+                )}
               </Button>
               <p className="text-sm text-muted-foreground mt-4 sm:mt-0 sm:ml-4">
                 No credit card required.

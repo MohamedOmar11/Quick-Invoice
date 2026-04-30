@@ -61,7 +61,6 @@ export function Topbar({
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="text-sm text-muted-foreground">Dashboard</div>
           <div className="text-lg font-semibold tracking-tight truncate">{title}</div>
         </div>
 
