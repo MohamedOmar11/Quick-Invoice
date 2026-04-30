@@ -29,7 +29,7 @@ export default async function LandingPage() {
           <div className="flex items-center gap-2">
             <Image src="/hesaby-logo.png" alt="Hesaby" width={270} height={72} className="h-16 w-auto" priority />
           </div>
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex md:absolute md:left-1/2 md:-translate-x-1/2 items-center gap-6">
             <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</Link>
             {!session?.user?.id ? (
               <Link href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
