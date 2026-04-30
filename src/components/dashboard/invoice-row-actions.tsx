@@ -20,8 +20,7 @@ export function InvoiceRowActions({ invoiceId }: { invoiceId: string }) {
     try {
       const res = await fetch(`/api/invoices/${invoiceId}/duplicate`, { method: "POST" });
       if (!res.ok) return;
-      const data = await res.json();
-      if (data?.id) router.push(`/dashboard/invoice/${data.id}?duplicated=1`);
+      router.refresh();
     } finally {
       setDuplicating(false);
     }

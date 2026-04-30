@@ -56,12 +56,10 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
-      {/* Theme toggle - top right */}
-      <div className="fixed top-4 right-4 z-50">
-        <ThemeToggle />
-      </div>
-
       <div className="w-full max-w-md">
+        <div className="flex justify-end mb-2">
+          <ThemeToggle />
+        </div>
         <div className="flex justify-center mb-8">
           <Link href="/" className="flex items-center gap-2">
             <Image src="/hesaby-logo.png" alt="Hesaby" width={405} height={108} className="h-24 w-auto" priority />
