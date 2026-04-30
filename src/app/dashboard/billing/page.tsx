@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2, Zap, UploadCloud, CreditCard, Gift } from "lucide-react";
-import { UploadDropzone } from "@/utils/uploadthing";
+import { SimpleUploader } from "@/components/upload/simple-uploader";
 
 export default function BillingPage() {
   const { data: session, update } = useSession();
@@ -271,23 +271,23 @@ export default function BillingPage() {
                           </div>
                         </div>
                       ) : (
-                        <UploadDropzone
+                        <SimpleUploader
                           endpoint="paymentScreenshot"
-                          onUploadBegin={() => {
+                          onBegin={() => {
                             setUploadingScreenshot(true);
                             setScreenshotProgress(0);
                             setPaymentStatus(null);
                           }}
-                          onUploadProgress={(p: number) => setScreenshotProgress(p)}
-                          onClientUploadComplete={(res) => {
-                            setScreenshotUrl(res[0].url);
+                          onProgress={(p) => setScreenshotProgress(p)}
+                          onError={(message) => {
                             setUploadingScreenshot(false);
                             setScreenshotProgress(0);
+                            setPaymentStatus({ type: "error", message });
                           }}
-                          onUploadError={(error: Error) => {
+                          onUploaded={(url) => {
+                            setScreenshotUrl(url);
                             setUploadingScreenshot(false);
                             setScreenshotProgress(0);
-                            setPaymentStatus({ type: "error", message: formatUploadError(error) });
                           }}
                         />
                       )}

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { InvoiceStylePanel } from "@/components/invoice/invoice-style-panel";
-import { UploadDropzone } from "@/utils/uploadthing";
+import { SimpleUploader } from "@/components/upload/simple-uploader";
 
 type SettingsPayload = {
   instapayUrl: string;
@@ -142,29 +142,27 @@ export function UserSettingsForm({ plan }: { plan: string }) {
                     </Button>
                   </div>
                 </div>
-                <UploadDropzone
+                <SimpleUploader
                   endpoint="brandLogo"
-                  onUploadProgress={(p: number) => setLogoProgress(p)}
-                  onClientUploadComplete={(res) => {
-                    const url = res?.[0]?.url;
-                    if (url) {
-                      setBrandLogoUrl(url);
-                      setBrandLogoUrlInput(url);
-                      setStatus({ type: "success", message: "Logo uploaded." });
-                      save({ brandLogoUrl: url });
-                    }
-                    setUploadingLogo(false);
-                    setLogoProgress(0);
-                  }}
-                  onUploadError={(error: Error) => {
-                    setUploadingLogo(false);
-                    setLogoProgress(0);
-                    setStatus({ type: "error", message: formatUploadError(error) });
-                  }}
-                  onUploadBegin={() => {
+                  disabled={loading || saving}
+                  onBegin={() => {
                     setUploadingLogo(true);
                     setStatus(null);
                     setLogoProgress(0);
+                  }}
+                  onProgress={(p) => setLogoProgress(p)}
+                  onError={(message) => {
+                    setUploadingLogo(false);
+                    setLogoProgress(0);
+                    setStatus({ type: "error", message });
+                  }}
+                  onUploaded={(url) => {
+                    setBrandLogoUrl(url);
+                    setBrandLogoUrlInput(url);
+                    setUploadingLogo(false);
+                    setLogoProgress(0);
+                    setStatus({ type: "success", message: "Logo uploaded." });
+                    save({ brandLogoUrl: url });
                   }}
                 />
                 {uploadingLogo ? <div className="text-sm text-muted-foreground">Uploading… {logoProgress}%</div> : null}
