@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SidebarNav } from "@/components/dashboard/sidebar-nav";
 import { ThemeToggle } from "@/components/dashboard/theme-toggle";
@@ -88,10 +88,10 @@ export function Topbar({
               }
             />
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>
+              <div className="px-2 py-1.5">
                 <div className="text-sm font-medium truncate">{user.name || "User"}</div>
                 <div className="text-xs text-muted-foreground truncate">{user.email}</div>
-              </DropdownMenuLabel>
+              </div>
               <DropdownMenuItem>
                 <Link href="/dashboard/settings" className="w-full">
                   Settings
@@ -115,4 +115,3 @@ export function Topbar({
     </header>
   );
 }
-
