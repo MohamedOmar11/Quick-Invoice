@@ -19,6 +19,7 @@ type SettingsPayload = {
 export function UserSettingsForm({ plan }: { plan: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const [instapayUrl, setInstapayUrl] = useState("");
@@ -42,7 +43,7 @@ export function UserSettingsForm({ plan }: { plan: string }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const save = async () => {
+  const save = async (override?: Partial<SettingsPayload>) => {
     setSaving(true);
     setStatus(null);
     try {
@@ -52,6 +53,7 @@ export function UserSettingsForm({ plan }: { plan: string }) {
         defaultInvoiceStyle,
         brandName,
         brandLogoUrl,
+        ...(override ?? {}),
       };
       const res = await fetch("/api/user/settings", {
         method: "PUT",
@@ -101,21 +103,38 @@ export function UserSettingsForm({ plan }: { plan: string }) {
               <div className="space-y-2">
                 <Label>Company Logo</Label>
                 {brandLogoUrl ? (
-                  <div className="rounded-lg border bg-muted/10 p-3 text-sm text-muted-foreground break-all">{brandLogoUrl}</div>
+                  <div className="space-y-3">
+                    <div className="rounded-lg border bg-muted/10 p-3 text-sm text-muted-foreground break-all">{brandLogoUrl}</div>
+                    <div className="rounded-lg border overflow-hidden bg-background">
+                      <img src={brandLogoUrl} alt="Company logo" className="w-full h-auto max-h-[220px] object-contain" />
+                    </div>
+                  </div>
                 ) : null}
                 <UploadDropzone
                   endpoint="brandLogo"
                   onClientUploadComplete={(res) => {
                     const url = res?.[0]?.url;
-                    if (url) setBrandLogoUrl(url);
+                    if (url) {
+                      setBrandLogoUrl(url);
+                      setStatus({ type: "success", message: "Logo uploaded." });
+                      save({ brandLogoUrl: url });
+                    }
+                    setUploadingLogo(false);
                   }}
-                  onUploadError={() => {}}
-                  className="ut-label:hidden ut-allowed-content:hidden ut-button:rounded-full ut-button:bg-primary ut-button:text-primary-foreground ut-container:border-dashed ut-container:rounded-xl ut-container:bg-muted/10"
+                  onUploadError={(error: Error) => {
+                    setUploadingLogo(false);
+                    setStatus({ type: "error", message: error.message });
+                  }}
+                  onUploadBegin={() => {
+                    setUploadingLogo(true);
+                    setStatus(null);
+                  }}
                 />
+                {uploadingLogo ? <div className="text-sm text-muted-foreground">Uploading…</div> : null}
               </div>
 
               <div className="flex justify-end">
-                <Button onClick={save} disabled={loading || saving} className="rounded-full">
+                <Button onClick={() => save()} disabled={loading || saving} className="rounded-full">
                   Save Brand Settings
                 </Button>
               </div>
@@ -139,7 +158,7 @@ export function UserSettingsForm({ plan }: { plan: string }) {
             <Input disabled={loading} value={vodafoneCashNumber} onChange={(e) => setVodafoneCashNumber(e.target.value)} />
           </div>
           <div className="flex justify-end">
-            <Button onClick={save} disabled={loading || saving} className="rounded-full">
+            <Button onClick={() => save()} disabled={loading || saving} className="rounded-full">
               Save
             </Button>
           </div>
@@ -164,7 +183,7 @@ export function UserSettingsForm({ plan }: { plan: string }) {
             onChange={setDefaultInvoiceStyle}
           />
           <div className="flex justify-end">
-            <Button onClick={save} disabled={loading || saving} className="rounded-full">
+            <Button onClick={() => save()} disabled={loading || saving} className="rounded-full">
               Save Default Style
             </Button>
           </div>

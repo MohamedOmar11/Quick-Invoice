@@ -59,7 +59,7 @@ ${cssVars}
         color: var(--textColor, #111);
         background: var(--backgroundColor, #fff);
         font-family: var(--fontStack, ui-sans-serif), system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-        font-size: 12px;
+        font-size: calc(var(--bodyFontSize, 12) * 1px);
       }
 
       .invoice {
@@ -141,8 +141,8 @@ ${cssVars}
 
       .row { display: flex; justify-content: space-between; gap: 16px; }
       .muted { color: var(--mutedColor, #6b7280); }
-      .title { font-size: ${Number(t.titleFontSize || 32)}px; font-weight: ${Number(t.headingWeight || 700)}; color: var(--accentColor, #111); margin: 0; }
-      .label { font-size: ${Number(t.labelFontSize || 10)}px; font-weight: 700; letter-spacing: 0.06em; text-transform: ${t.uppercaseLabels === false ? "none" : "uppercase"}; }
+      .title { font-size: calc(var(--titleFontSize, 32) * 1px); font-weight: var(--headingWeight, 700); color: var(--accentColor, #111); margin: 0; }
+      .label { font-size: calc(var(--labelFontSize, 10) * 1px); font-weight: 700; letter-spacing: 0.06em; text-transform: ${t.uppercaseLabels === false ? "none" : "uppercase"}; }
       .section { margin-top: 18px; }
       .divider { border-top: 1px solid var(--borderColor, #e5e7eb); margin-top: 14px; padding-top: 14px; }
       .invoice-inner { padding: 18px; }
