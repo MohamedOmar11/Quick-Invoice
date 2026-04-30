@@ -1,0 +1,256 @@
+diff --git a/src/app/api/invoices/[id]/duplicate/route.ts b/src/app/api/invoices/[id]/duplicate/route.ts
+new file mode 100644
+index 0000000..f3f2e14
+--- /dev/null
++++ b/src/app/api/invoices/[id]/duplicate/route.ts
+@@ -0,0 +1,80 @@
++import { NextResponse } from "next/server";
++import { getServerSession } from "next-auth";
++import { authOptions } from "@/lib/auth";
++import { prisma } from "@/lib/prisma";
++import { effectivePlanForUser, freeMonthlyInvoiceLimit, isTemplateAllowedForPlan } from "@/lib/plan-gating";
++import { logServerError } from "@/lib/safe-log";
++
++export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
++  try {
++    const session = await getServerSession(authOptions);
++    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
++
++    const { id: invoiceId } = await params;
++    const existing = await prisma.invoice.findUnique({
++      where: { id: invoiceId },
++      include: { user: { select: { plan: true, planExpiresAt: true } } },
++    });
++
++    if (!existing || existing.userId !== session.user.id) {
++      return new NextResponse("Not Found", { status: 404 });
++    }
++
++    const now = new Date();
++    const effectivePlan = effectivePlanForUser(existing.user, now);
++
++    if (existing.user?.plan === "PRO" && existing.user.planExpiresAt && new Date(existing.user.planExpiresAt) < now) {
++      await prisma.user.update({
++        where: { id: session.user.id },
++        data: { plan: "FREE", planExpiresAt: null },
++      });
++    }
++
++    if (effectivePlan === "FREE") {
++      const startOfMonth = new Date();
++      startOfMonth.setDate(1);
++      startOfMonth.setHours(0, 0, 0, 0);
++
++      const invoiceCount = await prisma.invoice.count({
++        where: {
++          userId: session.user.id,
++          createdAt: { gte: startOfMonth },
++        },
++      });
++
++      if (invoiceCount >= freeMonthlyInvoiceLimit()) {
++        return new NextResponse("Free plan limit reached", { status: 403 });
++      }
++
++      if (!isTemplateAllowedForPlan("FREE", existing.template)) {
++        return new NextResponse("Upgrade to Pro to use this template", { status: 403 });
++      }
++    }
++
++    const copyNumber = `${existing.invoiceNumber}-copy`;
++
++    const invoice = await prisma.invoice.create({
++      data: {
++        userId: session.user.id,
++        invoiceNumber: copyNumber,
++        clientName: existing.clientName,
++        clientEmail: existing.clientEmail,
++        issueDate: existing.issueDate,
++        dueDate: existing.dueDate,
++        currency: existing.currency,
++        tax: existing.tax,
++        notes: existing.notes,
++        template: existing.template,
++        style: (effectivePlan === "FREE" ? null : existing.style) as any,
++        items: existing.items as any,
++        subtotal: existing.subtotal,
++        total: existing.total,
++      },
++    });
++
++    return NextResponse.json({ id: invoice.id });
++  } catch (error) {
++    logServerError("INVOICE_DUPLICATE", error);
++    return new NextResponse("Internal Error", { status: 500 });
++  }
++}
+diff --git a/src/app/dashboard/page.tsx b/src/app/dashboard/page.tsx
+index 20b4f32..d4d581c 100644
+--- a/src/app/dashboard/page.tsx
++++ b/src/app/dashboard/page.tsx
+@@ -2,13 +2,13 @@ import { getServerSession } from "next-auth";
+ import { authOptions } from "@/lib/auth";
+ import { prisma } from "@/lib/prisma";
+ import Link from "next/link";
+-import { Plus, Search, FileText, MoreVertical, Edit, Copy, Trash } from "lucide-react";
++import { Plus, Search, FileText } from "lucide-react";
+ import { Button } from "@/components/ui/button";
+ import { Input } from "@/components/ui/input";
+ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+ import { normalizeClientFilter } from "@/lib/dashboard-filters";
++import { InvoiceRowActions } from "@/components/dashboard/invoice-row-actions";
+ 
+ export default async function DashboardPage({
+   searchParams,
+@@ -148,25 +148,7 @@ export default async function DashboardPage({
+                     {invoice.total.toFixed(2)} {invoice.currency}
+                   </TableCell>
+                   <TableCell>
+-                    <DropdownMenu>
+-                      <DropdownMenuTrigger className="h-9 w-9 inline-flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground transition-colors">
+-                        <MoreVertical className="h-4 w-4" />
+-                        <span className="sr-only">Open menu</span>
+-                      </DropdownMenuTrigger>
+-                      <DropdownMenuContent align="end">
+-                        <DropdownMenuItem className="cursor-pointer">
+-                          <Link href={`/dashboard/invoice/${invoice.id}`} className="flex items-center w-full">
+-                            <Edit className="mr-2 h-4 w-4" /> Edit
+-                          </Link>
+-                        </DropdownMenuItem>
+-                        <DropdownMenuItem>
+-                          <Copy className="mr-2 h-4 w-4" /> Duplicate
+-                        </DropdownMenuItem>
+-                        <DropdownMenuItem className="text-destructive">
+-                          <Trash className="mr-2 h-4 w-4" /> Delete
+-                        </DropdownMenuItem>
+-                      </DropdownMenuContent>
+-                    </DropdownMenu>
++                    <InvoiceRowActions invoiceId={invoice.id} />
+                   </TableCell>
+                 </TableRow>
+               ))}
+diff --git a/src/components/dashboard/invoice-row-actions.tsx b/src/components/dashboard/invoice-row-actions.tsx
+new file mode 100644
+index 0000000..d09ba34
+--- /dev/null
++++ b/src/components/dashboard/invoice-row-actions.tsx
+@@ -0,0 +1,96 @@
++"use client";
++
++import Link from "next/link";
++import { useRouter } from "next/navigation";
++import { useState } from "react";
++import { MoreVertical, Edit, Copy, Trash } from "lucide-react";
++import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
++import { Button } from "@/components/ui/button";
++import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
++
++export function InvoiceRowActions({ invoiceId }: { invoiceId: string }) {
++  const router = useRouter();
++  const [busy, setBusy] = useState(false);
++  const [deleteOpen, setDeleteOpen] = useState(false);
++
++  return (
++    <>
++      <Dialog open={deleteOpen} onOpenChange={(o) => (busy ? null : setDeleteOpen(o))}>
++        <DialogContent>
++          <DialogHeader>
++            <DialogTitle>Delete invoice?</DialogTitle>
++          </DialogHeader>
++          <div className="text-sm text-muted-foreground">This action can’t be undone.</div>
++          <DialogFooter>
++            <Button variant="outline" disabled={busy} onClick={() => setDeleteOpen(false)}>
++              Cancel
++            </Button>
++            <Button
++              variant="destructive"
++              disabled={busy}
++              onClick={async () => {
++                setBusy(true);
++                try {
++                  const res = await fetch(`/api/invoices/${invoiceId}`, { method: "DELETE" });
++                  if (res.ok) {
++                    setDeleteOpen(false);
++                    router.refresh();
++                  }
++                } finally {
++                  setBusy(false);
++                }
++              }}
++            >
++              Delete
++            </Button>
++          </DialogFooter>
++        </DialogContent>
++      </Dialog>
++
++      <DropdownMenu>
++        <DropdownMenuTrigger
++          render={
++            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-md text-muted-foreground hover:bg-muted" aria-label="Open menu">
++              <MoreVertical className="h-4 w-4" />
++            </Button>
++          }
++        />
++        <DropdownMenuContent align="end">
++          <DropdownMenuItem>
++            <Link href={`/dashboard/invoice/${invoiceId}`} className="flex items-center w-full">
++              <Edit className="mr-2 h-4 w-4" /> Edit
++            </Link>
++          </DropdownMenuItem>
++          <DropdownMenuItem
++            disabled={busy}
++            onSelect={async (e) => {
++              e.preventDefault();
++              setBusy(true);
++              try {
++                const res = await fetch(`/api/invoices/${invoiceId}/duplicate`, { method: "POST" });
++                if (!res.ok) return;
++                const data = await res.json();
++                if (data?.id) router.push(`/dashboard/invoice/${data.id}?duplicated=1`);
++              } finally {
++                setBusy(false);
++              }
++            }}
++          >
++            <Copy className="mr-2 h-4 w-4" /> Duplicate
++          </DropdownMenuItem>
++          <DropdownMenuItem
++            className="text-destructive"
++            disabled={busy}
++            onSelect={(e) => {
++              e.preventDefault();
++              setDeleteOpen(true);
++            }}
++          >
++            <Trash className="mr-2 h-4 w-4" /> Delete
++          </DropdownMenuItem>
++        </DropdownMenuContent>
++      </DropdownMenu>
++    </>
++  );
++}
++
+diff --git a/tests/invoice-actions.test.js b/tests/invoice-actions.test.js
+new file mode 100644
+index 0000000..eb92d98
+--- /dev/null
++++ b/tests/invoice-actions.test.js
+@@ -0,0 +1,15 @@
++const test = require("node:test");
++const assert = require("node:assert/strict");
++const fs = require("node:fs");
++
++test("dashboard invoices table wires duplicate/delete actions", () => {
++  const text = fs.readFileSync("src/app/dashboard/page.tsx", "utf8");
++  assert.ok(text.includes("InvoiceRowActions"), "Expected InvoiceRowActions to be used on dashboard invoices");
++});
++
++test("duplicate invoice API route exists", () => {
++  const text = fs.readFileSync("src/app/api/invoices/[id]/duplicate/route.ts", "utf8");
++  assert.ok(text.includes("export async function POST"), "Expected POST handler");
++  assert.ok(text.includes("prisma.invoice.create"), "Expected invoice duplication to create invoice");
++});
++
