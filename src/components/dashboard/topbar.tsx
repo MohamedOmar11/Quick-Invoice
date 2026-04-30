@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, Plus } from "lucide-react";
+import { useState } from "react";
+import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -10,6 +12,7 @@ import { SidebarNav } from "@/components/dashboard/sidebar-nav";
 import { ThemeToggle } from "@/components/dashboard/theme-toggle";
 import { LogoutButton } from "@/components/auth/logout-button";
 import Image from "next/image";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 function getTitle(pathname: string) {
   if (pathname.startsWith("/dashboard/invoice/new")) return "New invoice";
@@ -27,6 +30,8 @@ export function Topbar({
 }) {
   const pathname = usePathname();
   const title = getTitle(pathname);
+  const [logoutOpen, setLogoutOpen] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
   const initials = (user.name || user.email || "U")
     .split(" ")
     .filter(Boolean)
@@ -36,6 +41,29 @@ export function Topbar({
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <Dialog open={logoutOpen} onOpenChange={setLogoutOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Log out?</DialogTitle>
+          </DialogHeader>
+          <div className="text-sm text-muted-foreground">Are you sure you want to log out?</div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLogoutOpen(false)} disabled={logoutLoading}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={logoutLoading}
+              onClick={async () => {
+                setLogoutLoading(true);
+                await signOut({ callbackUrl: "/" });
+              }}
+            >
+              Log out
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className="h-16 px-4 md:px-6 flex items-center gap-3">
         <div className="md:hidden">
           <Sheet>
@@ -104,11 +132,8 @@ export function Topbar({
                   Billing
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem className="p-0">
-                <LogoutButton
-                  variant="ghost"
-                  className="w-full justify-start rounded-md px-2 py-1.5 text-sm font-medium"
-                />
+              <DropdownMenuItem onSelect={() => setLogoutOpen(true)} className="cursor-pointer text-destructive">
+                Log out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
