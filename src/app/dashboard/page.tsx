@@ -103,7 +103,7 @@ export default async function DashboardPage({
               </Link>
             </Button>
           </CardHeader>
-          <Table className="[&_td]:py-3">
+          <Table className="[&_th]:px-4 [&_td]:px-4 [&_td]:py-3">
             <TableHeader className="bg-muted/30">
               <TableRow>
                 <TableHead>Invoice</TableHead>

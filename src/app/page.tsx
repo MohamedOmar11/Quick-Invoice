@@ -24,7 +24,7 @@ export default async function LandingPage() {
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Image src="/hesaby-logo.png" alt="Hesaby" width={405} height={108} className="h-24 w-auto" priority />
+            <Image src="/hesaby-logo.png" alt="Hesaby" width={270} height={72} className="h-16 w-auto" priority />
           </div>
           <nav className="hidden md:flex items-center gap-6">
             <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</Link>
@@ -211,7 +211,7 @@ export default async function LandingPage() {
       <footer className="border-t py-12 bg-background">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Image src="/hesaby-logo.png" alt="Hesaby" width={405} height={108} className="h-20 w-auto" />
+            <Image src="/hesaby-logo.png" alt="Hesaby" width={270} height={72} className="h-14 w-auto" />
           </div>
           <p>© {new Date().getFullYear()} Hesaby. All rights reserved.</p>
         </div>
