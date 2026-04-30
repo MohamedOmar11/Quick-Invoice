@@ -33,3 +33,32 @@ test("renders invoice html with tokens", () => {
   assert.ok(html.includes("Acme"));
 });
 
+test("includes print-safe page break styles", () => {
+  const html = renderInvoiceHtml({
+    theme: { id: "minimal-corporate", direction: "ltr", layoutVariant: "grid" },
+    tokens: {
+      accentColor: "#123456",
+      backgroundColor: "#ffffff",
+      textColor: "#111111",
+      mutedColor: "#666666",
+      borderColor: "#e5e7eb",
+      tableHeaderBg: "#f9fafb",
+      borderRadius: 10,
+    },
+    invoice: {
+      invoiceNumber: "INV-2",
+      clientName: "Acme",
+      clientEmail: "",
+      issueDate: "2026-01-01",
+      dueDate: "2026-01-15",
+      currency: "EGP",
+      tax: 0,
+      notes: "",
+      items: [{ title: "Work", quantity: 1, price: 100 }],
+    },
+    payment: { instapayUrl: null, vodafoneCashNumber: null },
+  });
+
+  assert.ok(html.includes("box-decoration-break: clone"));
+  assert.ok(html.includes("-webkit-box-decoration-break: clone"));
+ });

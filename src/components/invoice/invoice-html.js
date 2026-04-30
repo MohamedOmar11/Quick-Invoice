@@ -64,13 +64,15 @@ ${cssVars}
         border-radius: ${Number(t.borderRadius || 0)}px;
         padding: 18px;
         position: relative;
-        overflow: hidden;
+        overflow: visible;
       }
 
       .variant-grid {}
       .variant-fast { border: 0; padding: 0; }
       .variant-fast .invoice-inner { padding: 0; }
       .variant-stripe { padding-inline-start: 44px; }
+      .variant-stripe,
+      .variant-blueprint { overflow: hidden; }
       .variant-stripe::before {
         content: "";
         position: absolute;
@@ -122,10 +124,18 @@ ${cssVars}
       td { border-bottom: 1px solid var(--borderColor, #e5e7eb); }
       .num { text-align: end; white-space: nowrap; }
       .keep-together { break-inside: avoid; page-break-inside: avoid; }
+      .meta,
+      .divider { break-inside: avoid; page-break-inside: avoid; }
       tr { break-inside: avoid; page-break-inside: avoid; }
 
       @media print {
-        .invoice { box-shadow: none; }
+        .invoice {
+          box-shadow: none;
+          overflow: visible;
+          border-radius: 0;
+          box-decoration-break: clone;
+          -webkit-box-decoration-break: clone;
+        }
         html, body { background: #fff; }
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
