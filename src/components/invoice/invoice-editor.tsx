@@ -49,11 +49,11 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
   const [userBrand, setUserBrand] = useState<{ name?: string | null; logoUrl?: string | null } | null>(null);
   const isFree = (session?.user as any)?.plan === "FREE";
   const defaultValues: InvoiceFormData = initialData || {
-    invoiceNumber: `INV-${Math.floor(Math.random() * 10000)}`,
+    invoiceNumber: "",
     clientName: "",
     clientEmail: "",
-    issueDate: new Date().toISOString().split("T")[0],
-    dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    issueDate: "",
+    dueDate: "",
     currency: "EGP",
     tax: 0,
     notes: "Thank you for your business!",
@@ -78,6 +78,25 @@ export function InvoiceEditor({ initialData }: { initialData?: InvoiceFormData }
   const taxAmount = subtotal * (watchAll.tax / 100);
   const total = subtotal + taxAmount;
   const selectedTheme = getThemeById(watchAll.template);
+
+  useEffect(() => {
+    if (initialData) return;
+
+    const currentInvoiceNumber = form.getValues("invoiceNumber");
+    if (!currentInvoiceNumber) {
+      form.setValue("invoiceNumber", `INV-${Math.floor(Math.random() * 10000)}`);
+    }
+
+    const issueDate = form.getValues("issueDate");
+    if (!issueDate) {
+      form.setValue("issueDate", new Date().toISOString().split("T")[0]);
+    }
+
+    const dueDate = form.getValues("dueDate");
+    if (!dueDate) {
+      form.setValue("dueDate", new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
+    }
+  }, [form, initialData]);
 
   useEffect(() => {
     const current = form.getValues("template");
