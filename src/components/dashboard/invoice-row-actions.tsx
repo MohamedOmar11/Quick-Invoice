@@ -3,45 +3,65 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { MoreVertical, Edit, Copy, Trash } from "lucide-react";
+import { MoreVertical, Edit, Copy, Trash, Loader2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export function InvoiceRowActions({ invoiceId }: { invoiceId: string }) {
   const router = useRouter();
-  const [busy, setBusy] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDuplicate() {
+    if (duplicating) return;
+    setDuplicating(true);
+    try {
+      const res = await fetch(`/api/invoices/${invoiceId}/duplicate`, { method: "POST" });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data?.id) router.push(`/dashboard/invoice/${data.id}?duplicated=1`);
+    } finally {
+      setDuplicating(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/invoices/${invoiceId}`, { method: "DELETE" });
+      if (res.ok) {
+        setDeleteOpen(false);
+        router.refresh();
+      }
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <>
-      <Dialog open={deleteOpen} onOpenChange={(o) => (busy ? null : setDeleteOpen(o))}>
+      <Dialog open={deleteOpen} onOpenChange={(o) => (deleting ? null : setDeleteOpen(o))}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete invoice?</DialogTitle>
           </DialogHeader>
-          <div className="text-sm text-muted-foreground">This action can’t be undone.</div>
+          <div className="text-sm text-muted-foreground">This action cannot be undone.</div>
           <DialogFooter>
-            <Button variant="outline" disabled={busy} onClick={() => setDeleteOpen(false)}>
+            <Button variant="outline" disabled={deleting} onClick={() => setDeleteOpen(false)}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              disabled={busy}
-              onClick={async () => {
-                setBusy(true);
-                try {
-                  const res = await fetch(`/api/invoices/${invoiceId}`, { method: "DELETE" });
-                  if (res.ok) {
-                    setDeleteOpen(false);
-                    router.refresh();
-                  }
-                } finally {
-                  setBusy(false);
-                }
-              }}
-            >
-              Delete
+            <Button variant="destructive" disabled={deleting} onClick={handleDelete}>
+              {deleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -50,8 +70,18 @@ export function InvoiceRowActions({ invoiceId }: { invoiceId: string }) {
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-md text-muted-foreground hover:bg-muted" aria-label="Open menu">
-              <MoreVertical className="h-4 w-4" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-md text-muted-foreground hover:bg-muted"
+              aria-label="Open menu"
+              disabled={duplicating}
+            >
+              {duplicating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <MoreVertical className="h-4 w-4" />
+              )}
             </Button>
           }
         />
@@ -61,31 +91,10 @@ export function InvoiceRowActions({ invoiceId }: { invoiceId: string }) {
               <Edit className="mr-2 h-4 w-4" /> Edit
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem
-            disabled={busy}
-            onSelect={async (e) => {
-              e.preventDefault();
-              setBusy(true);
-              try {
-                const res = await fetch(`/api/invoices/${invoiceId}/duplicate`, { method: "POST" });
-                if (!res.ok) return;
-                const data = await res.json();
-                if (data?.id) router.push(`/dashboard/invoice/${data.id}?duplicated=1`);
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
+          <DropdownMenuItem disabled={duplicating} onClick={handleDuplicate}>
             <Copy className="mr-2 h-4 w-4" /> Duplicate
           </DropdownMenuItem>
-          <DropdownMenuItem
-            className="text-destructive"
-            disabled={busy}
-            onSelect={(e) => {
-              e.preventDefault();
-              setDeleteOpen(true);
-            }}
-          >
+          <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
             <Trash className="mr-2 h-4 w-4" /> Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -93,4 +102,3 @@ export function InvoiceRowActions({ invoiceId }: { invoiceId: string }) {
     </>
   );
 }
-
